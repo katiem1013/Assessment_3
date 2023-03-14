@@ -1,10 +1,12 @@
 import pygame
+
 pygame.init()
 
-screen_width = 1000
-screen_height = 700
+screen_width = 1920
+screen_height = 1080
 
 screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption('Assessment 3')
 clock = pygame.time.Clock()  # clock to set the frame rate
 
 colour = 1  # 1 is Black, 2 is White
@@ -28,10 +30,29 @@ def draw_painting(paints):
         pygame.draw.circle(screen, paints[i][0], paints[i][1], paints[i][2])
 
 
-class Player1:
-    def __init__(self, x_pos2, y_pos2):
+class Player1(pygame.sprite.Sprite):
+    global colour
+
+    def __init__(self, x_pos2, y_pos2, health):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load('Graphics/Player.png')
+        self.rect = self.image.get_rect()
         self.x_pos2 = x_pos2
         self.y_pos2 = y_pos2
+        self.rect.center = [x_pos2, y_pos2]
+        self.health_start = health
+        self.health_remaining = health
+
+    def update(self):
+        speed = 8
+        # movement inputs
+        key = pygame.key.get_pressed()
+        if key[pygame.K_LEFT] and self.rect.left > 0:
+            self.rect.x -= speed
+        if key[pygame.K_RIGHT] and self.rect.right < screen_width/2:
+            self.rect.x += speed
+        if key[pygame.K_UP] and self.rect.bottom > 0:
+            pass
 
 
 class Player2:
@@ -53,9 +74,13 @@ def colour_change():
     if colour == 1:
         screen.blit(background_white, (0, 0))
         screen.blit(floor_black, (0, screen_height - 175))
+        screen.blit(background_black, (screen_width / 2, 0))
+        screen.blit(floor_white, (screen_width / 2, 0))
     if colour == 2:
-        screen.blit(background_black, (0, 0))
-        screen.blit(floor_white, (0, screen_height - 175))
+        screen.blit(background_white, (0, 0))
+        screen.blit(floor_black, (0, 0))
+        screen.blit(background_black, (screen_width / 2, 0))
+        screen.blit(floor_white, (screen_width / 2, screen_height - 175))
 
     location = pygame.mouse.get_pos()
     mouse = pygame.mouse.get_pressed()
@@ -65,10 +90,18 @@ def colour_change():
 
     draw_painting(painting)
 
+
+player_group = pygame.sprite.Group()
+player = Player1(int(screen_width / 4), screen_height - 207, 3)
+player_group.add(player)
+
 run = True
 while run:
 
     colour_change()
+    player_group.update()
+    player_group.draw(screen)
+
     key = pygame.key.get_pressed()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -77,6 +110,9 @@ while run:
         if key[pygame.K_ESCAPE]:
             run = False
 
+    pygame.draw.line(screen, (150, 200, 220), (screen_width/2, 0), (screen_width/2, screen_height), 5)
+
+    pygame.display.flip()
     pygame.display.update()
     clock.tick(60)
 
