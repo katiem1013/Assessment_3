@@ -1,5 +1,4 @@
 import pygame
-
 pygame.init()
 
 # screen variables
@@ -38,7 +37,6 @@ painting = []
 active_colour = 229, 255, 204
 
 
-
 def draw_painting(paints):
     for i in range(len(paints)):
         pygame.draw.circle(screen, paints[i][0], paints[i][1], paints[i][2])
@@ -67,8 +65,7 @@ class Player1(pygame.sprite.Sprite):
             self.rect.x -= speed
         if key[pygame.K_d] and self.rect.right < screen_width/2:
             self.rect.x += speed
-        if key[pygame.K_w] and self.rect.bottom > 0:
-            pass
+
 
 
 class Player2(pygame.sprite.Sprite):
@@ -80,7 +77,7 @@ class Player2(pygame.sprite.Sprite):
         self.x = 0
         self.y = 0
         self.y_velocity = player_2_velocity
-        self.rect = self.image.get_rect(topleft=(x, y))
+        self.rect = self.image.get_rect(center=(x, y))
         self.health = 100
 
     def update(self):
@@ -91,21 +88,22 @@ class Player2(pygame.sprite.Sprite):
             self.rect.x -= speed
         if key[pygame.K_RIGHT] and self.rect.right < screen_width / 2:
             self.rect.x += speed
-        if key[pygame.K_UP] and self.rect.bottom > 0:
-            pass
 
 
 def colour_change():
     global colour
     global clicking
-    global player_1_velocity
     key = pygame.key.get_pressed()
     if key[pygame.K_1] and colour == 2:
         colour = 1
+        player.y_velocity = 5
+        player2.y_velocity = -5
         painting.clear()
 
     if key[pygame.K_2] and colour == 1:
         colour = 2
+        player.y_velocity = -5
+        player2.y_velocity = 5
         painting.clear()
 
     if colour == 1:
@@ -135,9 +133,6 @@ player = Player1(int(screen_width / 4), screen_height - 500)
 player2 = Player2(int(screen_width / 1.3), screen_height - 500)
 player_group.add(player, player2)
 
-ground_collision_white = player_group.colliderect(floor_white_rect)
-ground_collision_black = player_group.colliderect(floor_black_rect)
-
 run = True
 while run:
 
@@ -153,13 +148,11 @@ while run:
         if key[pygame.K_ESCAPE]:
             run = False
 
-    if ground_collision_white:
-        player_1_velocity = 0
-        player_2_velocity = 0
-
-    if ground_collision_black:
-        player_1_velocity = 0
-        player_2_velocity = 0
+    # now it only works one way??
+    if pygame.Rect.colliderect(player.rect, (floor_black_rect or floor_white_rect)):
+        player.y_velocity = 0
+    if pygame.Rect.colliderect(player2.rect, (floor_black_rect or floor_white_rect)):
+        player2.y_velocity = 0
 
     pygame.draw.line(screen, (150, 200, 220), (screen_width/2, 0), (screen_width/2, screen_height), 5)
 
