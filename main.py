@@ -66,7 +66,8 @@ class Player1(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.y += self.y_velocity
-        cooldown = 300  # milliseconds
+        cooldown = 500  # milliseconds
+        global bullet_speed_1
 
         # movement inputs
         key = pygame.key.get_pressed()
@@ -77,13 +78,16 @@ class Player1(pygame.sprite.Sprite):
 
         time_now = pygame.time.get_ticks()
 
-        if colour == 2 and key[pygame.K_w] and time_now - self.last_shot > cooldown:
-            bullet = Bullets(self.rect.centerx, self.rect.bottom)
-            bullet_group.add(bullet)
-            self.last_shot = time_now
         if colour == 1 and key[pygame.K_w] and time_now - self.last_shot > cooldown:
             bullet = Bullets(self.rect.centerx, self.rect.top)
             bullet_group.add(bullet)
+            bullet_speed_1 = -5
+            self.last_shot = time_now
+
+        if colour == 2 and key[pygame.K_w] and time_now - self.last_shot > cooldown:
+            bullet = Bullets(self.rect.centerx, self.rect.bottom)
+            bullet_group.add(bullet)
+            bullet_speed_1 = 5
             self.last_shot = time_now
 
 
@@ -102,8 +106,8 @@ class Player2(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.y += self.y_velocity
-        cooldown = 300  # milliseconds
-
+        cooldown = 500  # milliseconds
+        global bullet_speed_2
         # movement inputs
         key = pygame.key.get_pressed()
         if key[pygame.K_LEFT] and self.rect.left > screen_width/2:
@@ -114,12 +118,15 @@ class Player2(pygame.sprite.Sprite):
         time_now = pygame.time.get_ticks()
 
         if colour == 1 and key[pygame.K_UP] and time_now - self.last_shot > cooldown:
-            bullet = Bullets(self.rect.centerx, self.rect.top)
+            bullet = Bullets2(self.rect.centerx, self.rect.bottom)
             bullet_group.add(bullet)
+            bullet_speed_2 = 5
             self.last_shot = time_now
+
         if colour == 2 and key[pygame.K_UP] and time_now - self.last_shot > cooldown:
-            bullet = Bullets(self.rect.centerx, self.rect.bottom)
-            bullet_group.add(bullet)
+            bullet2 = Bullets2(self.rect.centerx, self.rect.top)
+            bullet_group.add(bullet2)
+            bullet_speed_2 = -5
             self.last_shot = time_now
 
 
@@ -132,8 +139,24 @@ class Bullets(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.y += bullet_speed_1
+        if self.rect.bottom > screen_height:
+            self.kill()
+        if self.rect.top < 0:
+            self.kill()
+
+
+class Bullets2(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load('Graphics/Bullet.png')
+        self.rect = self.image.get_rect()
+        self.rect.center = [x, y]
+
+    def update(self):
         self.rect.y += bullet_speed_2
-        if self.rect.bottom < 0:
+        if self.rect.bottom > screen_height:
+            self.kill()
+        if self.rect.top < 0:
             self.kill()
 
 
