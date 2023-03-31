@@ -10,17 +10,19 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Assessment 3')
 clock = pygame.time.Clock()  # clock to set the frame rate
 
+# tile map
+tile_size = 64
+
 # screen flipping variables
 colour = 1  # 1 has player 1s platform at the bottom, 2 has the platform at the top
 
 # player variables
 player_velocity = 5
-speed = 8
 bullet_speed = -5
 
 # background colours
 background_black = pygame.image.load('Graphics/BackgroundBlack.png').convert()
-background_white = pygame.image.load('Graphics/BackgroundWhite.png').convert()
+background_white = pygame.image.load('Graphics/BackgroundBlack.png').convert()
 
 # background rects
 background_white_rect = background_white.get_rect()
@@ -42,8 +44,12 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = [x, y]
         self.health = 100
         self.last_shot = pygame.time.get_ticks()
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
 
     def update(self):
+        speed = 8
+        y_collision = 0
         self.rect.y += self.y_velocity
         cooldown = 500  # milliseconds
         global bullet_speed
@@ -51,7 +57,7 @@ class Player(pygame.sprite.Sprite):
         # movement inputs
         if key[pygame.K_a] and self.rect.left > 0:
             self.rect.x -= speed
-        if key[pygame.K_d] and self.rect.right < screen_width/2:
+        if key[pygame.K_d] and self.rect.right < screen_width:
             self.rect.x += speed
 
         time_now = pygame.time.get_ticks()
@@ -67,6 +73,79 @@ class Player(pygame.sprite.Sprite):
             bullet_group.add(bullet)
             bullet_speed = 5
             self.last_shot = time_now
+
+        # checking for collision
+        for tile in world.tile_list:
+            # check for collision in x direction
+            if tile[1].colliderect(self.rect.x, self.rect.y, self.width, self.height):
+                speed = 0
+            # check for collision in y direction
+            if tile[1].colliderect(self.rect.x, self.rect.y, self.width, self.height):
+                # check if the player is hitting the ground or roof
+                if self.y_velocity < 0:
+                    y_collision = tile[1].bottom - self.rect.top
+                if self.y_velocity >= 0:
+                    y_collision = tile[1].top - self.rect.bottom
+
+        self.rect.y += y_collision
+
+
+class World():
+    def __init__(self, data):
+        self.tile_list = []
+
+        main_floor = pygame.image.load('Graphics/FloorMain.png')
+        right_side = pygame.image.load('Graphics/SideLeft.png')
+
+        row_count = 0
+        for row in data:
+            col_count = 0
+            for tile in row:
+                if tile == 1:
+                    image = main_floor
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
+                if tile == 2:
+                    image = right_side
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
+                col_count += 1
+            row_count += 1
+
+    def draw(self):
+        for tile in self.tile_list:
+            screen.blit(tile[0], tile[1])
+
+
+world_data = [
+[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+[1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+[1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+[1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+[1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2],
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2],
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2],
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2],
+[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+]
+
+world = World(world_data)
+
+
 
 
 class Bullets(pygame.sprite.Sprite):
@@ -89,12 +168,12 @@ def gravity_change():
     global colour
     global bullet_speed
     key = pygame.key.get_pressed()
-    if key[pygame.K_COMMA] and colour == 2:
+    if key[pygame.K_DOWN] and colour == 2:
         colour = 1
         player.y_velocity = 5
         bullet_speed = -5
 
-    if key[pygame.K_PERIOD] and colour == 1:
+    if key[pygame.K_UP] and colour == 1:
         colour = 2
         player.y_velocity = -5
         bullet_speed = 5
@@ -117,6 +196,8 @@ while run:
     # allows the colour change function to run within the game
     gravity_change()
 
+    world.draw()
+
     # allows the players to run within the game
     player_group.update()
     player_group.draw(screen)
@@ -137,9 +218,6 @@ while run:
     # player collision with the floors, sets the players velocity to 0 so they stop falling
     #if player.rect.colliderect(floor_black):
     #    player.y_velocity = 0
-
-    # draws the line separating the two players on the screen
-    pygame.draw.line(screen, (150, 200, 220), ((screen_width/2) - 2.5, 0), ((screen_width/2) - 2.5, screen_height), 5)
 
     pygame.display.flip()
     pygame.display.update()
