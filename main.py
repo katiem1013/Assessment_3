@@ -28,6 +28,8 @@ background_white = pygame.image.load('Graphics/BackgroundBlack.png').convert()
 background_white_rect = background_white.get_rect()
 background_black_rect = background_black.get_rect()
 
+key = pygame.key.get_pressed()
+
 
 class Player(pygame.sprite.Sprite):
     global colour
@@ -37,8 +39,8 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load('Graphics/Player.png').convert()
-        self.x = 0
-        self.y = 0
+        self.x = x
+        self.y = y
         self.y_velocity = player_velocity
         self.rect = self.image.get_rect()
         self.rect.center = [x, y]
@@ -48,27 +50,27 @@ class Player(pygame.sprite.Sprite):
         self.height = self.image.get_height()
 
     def update(self):
-        speed = 8
         y_collision = 0
+        speed = 0
         self.rect.y += self.y_velocity
-        cooldown = 500  # milliseconds
+        cool_down = 500  # milliseconds
         global bullet_speed
-        key = pygame.key.get_pressed()
+        global key
         # movement inputs
         if key[pygame.K_a] and self.rect.left > 0:
-            self.rect.x -= speed
+            speed -= 8
         if key[pygame.K_d] and self.rect.right < screen_width:
-            self.rect.x += speed
+            speed += 8
 
         time_now = pygame.time.get_ticks()
 
-        if colour == 1 and key[pygame.K_w] and time_now - self.last_shot > cooldown:
+        if colour == 1 and key[pygame.K_w] and time_now - self.last_shot > cool_down:
             bullet = Bullets(self.rect.centerx, self.rect.top)
             bullet_group.add(bullet)
             bullet_speed = -5
             self.last_shot = time_now
 
-        if colour == 2 and key[pygame.K_w] and time_now - self.last_shot > cooldown:
+        if colour == 2 and key[pygame.K_w] and time_now - self.last_shot > cool_down:
             bullet = Bullets(self.rect.centerx, self.rect.bottom)
             bullet_group.add(bullet)
             bullet_speed = 5
@@ -77,10 +79,13 @@ class Player(pygame.sprite.Sprite):
         # checking for collision
         for tile in world.tile_list:
             # check for collision in x direction
-            if tile[1].colliderect(self.rect.x, self.rect.y, self.width, self.height):
+            # except its checking all collisions?
+            # i do not understand
+            # pygame please T-T
+            if tile[1].colliderect(self.rect.x + speed, self.rect.y, self.width, self.height):
                 speed = 0
             # check for collision in y direction
-            if tile[1].colliderect(self.rect.x, self.rect.y, self.width, self.height):
+            if tile[1].colliderect(self.rect.x, self.rect.y + y_collision, self.width, self.height):
                 # check if the player is hitting the ground or roof
                 if self.y_velocity < 0:
                     y_collision = tile[1].bottom - self.rect.top
@@ -88,12 +93,14 @@ class Player(pygame.sprite.Sprite):
                     y_collision = tile[1].top - self.rect.bottom
 
         self.rect.y += y_collision
+        self.rect.x += speed
 
 
-class World():
+class World:
     def __init__(self, data):
         self.tile_list = []
 
+        # tile map images
         main_floor = pygame.image.load('Graphics/FloorMain.png')
         right_side = pygame.image.load('Graphics/SideLeft.png')
         left_side = pygame.image.load('Graphics/SideRight.png')
@@ -205,23 +212,23 @@ class World():
 
 
 world_data = [
-[8, 4, 4, 7, 8, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7],
-[2, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-[2, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-[2, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-[2, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-[2, 0, 0, 11, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-[2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-[2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-[2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-[2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-[2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-[2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 10, 0, 0, 3],
-[2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 3],
-[2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 3],
-[2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 3],
-[2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 3],
-[6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 6, 1, 1, 5]
+    [8, 4, 4, 7, 8, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7],
+    [2, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [2, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [2, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [2, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [2, 0, 0, 11, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 10, 0, 0, 3],
+    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 3],
+    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 3],
+    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 3],
+    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 3],
+    [6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 6, 1, 1, 5]
 ]
 
 world = World(world_data)
@@ -246,7 +253,7 @@ def gravity_change():
     # global variables
     global colour
     global bullet_speed
-    key = pygame.key.get_pressed()
+    global key
     if key[pygame.K_DOWN] and colour == 2:
         colour = 1
         player.y_velocity = 5
@@ -293,10 +300,6 @@ while run:
         # escape turns run to false
         if key[pygame.K_ESCAPE]:
             run = False
-
-    # player collision with the floors, sets the players velocity to 0 so they stop falling
-    #if player.rect.colliderect(floor_black):
-    #    player.y_velocity = 0
 
     pygame.display.flip()
     pygame.display.update()
