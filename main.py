@@ -39,27 +39,25 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load('Graphics/Player.png').convert()
-        self.x = x
-        self.y = y
         self.y_velocity = player_velocity
         self.rect = self.image.get_rect()
-        self.rect.center = [x, y]
+        self.rect.x = x
+        self.rect.y = y
         self.health = 100
         self.last_shot = pygame.time.get_ticks()
         self.width = self.image.get_width()
         self.height = self.image.get_height()
 
     def update(self):
-        y_collision = 0
         speed = 0
         self.rect.y += self.y_velocity
         cool_down = 500  # milliseconds
         global bullet_speed
         global key
         # movement inputs
-        if key[pygame.K_a] and self.rect.left > 0:
+        if key[pygame.K_LEFT] and self.rect.left > 0:
             speed -= 8
-        if key[pygame.K_d] and self.rect.right < screen_width:
+        if key[pygame.K_RIGHT] and self.rect.right < screen_width:
             speed += 8
 
         time_now = pygame.time.get_ticks()
@@ -79,20 +77,24 @@ class Player(pygame.sprite.Sprite):
         # checking for collision
         for tile in world.tile_list:
             # check for collision in x direction
-            # except its checking all collisions?
-            # i do not understand
-            # pygame please T-T
             if tile[1].colliderect(self.rect.x + speed, self.rect.y, self.width, self.height):
                 speed = 0
             # check for collision in y direction
-            if tile[1].colliderect(self.rect.x, self.rect.y + y_collision, self.width, self.height):
-                # check if the player is hitting the ground or roof
-                if self.y_velocity < 0:
-                    y_collision = tile[1].bottom - self.rect.top
-                if self.y_velocity >= 0:
-                    y_collision = tile[1].top - self.rect.bottom
+            if tile[1].colliderect(self.rect.x, self.rect.y + player_velocity, self.width, self.height):
+                if self.y_velocity == 5:
+                    self.y_velocity = tile[1].bottom - self.rect.top
+                    self.y_velocity = 0
+                # check if above the ground i.e. falling
+                elif self.y_velocity >= 0:
+                    self.y_velocity = 0
+            if tile[1].colliderect(self.rect.x, self.rect.y - player_velocity, self.width, self.height):
+                if self.y_velocity == -5:
+                      self.y_velocity = 0
+                # check if above the ground i.e. falling
+                elif self.y_velocity <= 0:
+                    self.y_velocity = tile[1].top - self.rect.bottom
+                    self.y_velocity = 0
 
-        self.rect.y += y_collision
         self.rect.x += speed
 
 
@@ -258,11 +260,13 @@ def gravity_change():
         colour = 1
         player.y_velocity = 5
         bullet_speed = -5
+        player.image = pygame.transform.rotate(player.image, 180)
 
     if key[pygame.K_UP] and colour == 1:
         colour = 2
         player.y_velocity = -5
         bullet_speed = 5
+        player.image = pygame.transform.rotate(player.image, 180)
 
 
 player_group = pygame.sprite.Group()
