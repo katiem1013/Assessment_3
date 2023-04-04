@@ -14,32 +14,28 @@ clock = pygame.time.Clock()  # clock to set the frame rate
 tile_size = 64
 
 # screen flipping variables
-colour = 1  # 1 has player 1s platform at the bottom, 2 has the platform at the top
+gravity = 1  # 1 has the player at the bottom, 2 has the player at the top
 
 # player variables
-player_velocity = 5
 bullet_speed = -5
 
 # background colours
-background_black = pygame.image.load('Graphics/BackgroundBlack.png').convert()
-background_white = pygame.image.load('Graphics/BackgroundBlack.png').convert()
+background = pygame.image.load('Graphics/Background.png').convert()
 
 # background rects
-background_white_rect = background_white.get_rect()
-background_black_rect = background_black.get_rect()
+background_rect = background.get_rect()
 
 key = pygame.key.get_pressed()
 
 
 class Player(pygame.sprite.Sprite):
-    global colour
-    global player_velocity
+    global gravity
 
     def __init__(self, x, y):
         super().__init__()
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load('Graphics/Player.png').convert()
-        self.y_velocity = player_velocity
+        self.y_velocity = 5
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -47,6 +43,7 @@ class Player(pygame.sprite.Sprite):
         self.last_shot = pygame.time.get_ticks()
         self.width = self.image.get_width()
         self.height = self.image.get_height()
+        self.collision = False
 
     def update(self):
         speed = 0
@@ -62,13 +59,13 @@ class Player(pygame.sprite.Sprite):
 
         time_now = pygame.time.get_ticks()
 
-        if colour == 1 and key[pygame.K_w] and time_now - self.last_shot > cool_down:
+        if gravity == 1 and key[pygame.K_w] and time_now - self.last_shot > cool_down:
             bullet = Bullets(self.rect.centerx, self.rect.top)
             bullet_group.add(bullet)
             bullet_speed = -5
             self.last_shot = time_now
 
-        if colour == 2 and key[pygame.K_w] and time_now - self.last_shot > cool_down:
+        if gravity == 2 and key[pygame.K_w] and time_now - self.last_shot > cool_down:
             bullet = Bullets(self.rect.centerx, self.rect.bottom)
             bullet_group.add(bullet)
             bullet_speed = 5
@@ -78,22 +75,27 @@ class Player(pygame.sprite.Sprite):
         for tile in world.tile_list:
             # check for collision in x direction
             if tile[1].colliderect(self.rect.x + speed, self.rect.y, self.width, self.height):
+                self.collision = True
                 speed = 0
             # check for collision in y direction
-            if tile[1].colliderect(self.rect.x, self.rect.y + player_velocity, self.width, self.height):
+            if tile[1].colliderect(self.rect.x, self.rect.y + self.y_velocity, self.width, self.height):
+                self.collision = True
                 if self.y_velocity == 5:
                     self.y_velocity = tile[1].bottom - self.rect.top
                     self.y_velocity = 0
                 # check if above the ground i.e. falling
-                elif self.y_velocity >= 0:
+                if self.y_velocity >= 0:
                     self.y_velocity = 0
-            if tile[1].colliderect(self.rect.x, self.rect.y - player_velocity, self.width, self.height):
+            if tile[1].colliderect(self.rect.x, self.rect.y + self.y_velocity, self.width, self.height):
+                self.collision = True
                 if self.y_velocity == -5:
-                      self.y_velocity = 0
+                    self.y_velocity = 0
                 # check if above the ground i.e. falling
-                elif self.y_velocity <= 0:
+                if self.y_velocity <= 0:
                     self.y_velocity = tile[1].top - self.rect.bottom
                     self.y_velocity = 0
+            if tile[0].get_rect().colliderect(player):
+                self.collision = False
 
         self.rect.x += speed
 
@@ -253,17 +255,17 @@ class Bullets(pygame.sprite.Sprite):
 
 def gravity_change():
     # global variables
-    global colour
+    global gravity
     global bullet_speed
     global key
-    if key[pygame.K_DOWN] and colour == 2:
-        colour = 1
+    if key[pygame.K_DOWN] and gravity == 2:
+        gravity = 1
         player.y_velocity = 5
         bullet_speed = -5
         player.image = pygame.transform.rotate(player.image, 180)
 
-    if key[pygame.K_UP] and colour == 1:
-        colour = 2
+    if key[pygame.K_UP] and gravity == 1:
+        gravity = 2
         player.y_velocity = -5
         bullet_speed = 5
         player.image = pygame.transform.rotate(player.image, 180)
@@ -279,11 +281,10 @@ bullet_group = pygame.sprite.Group()
 run = True
 while run:
 
-    # makes the backgrounds appear on the screen
-    screen.blit(background_white, (0, 0))
-    screen.blit(background_black, (screen_width / 2, 0))
+    # makes the background appear on the screen
+    screen.blit(background, (0, 0))
 
-    # allows the colour change function to run within the game
+    # allows the gravity change function to run within the game
     gravity_change()
 
     world.draw()
@@ -291,6 +292,8 @@ while run:
     # allows the players to run within the game
     player_group.update()
     player_group.draw(screen)
+
+    print(player.collision)
 
     bullet_group.update()
     bullet_group.draw(screen)
