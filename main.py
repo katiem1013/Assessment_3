@@ -43,7 +43,7 @@ class Player(pygame.sprite.Sprite):
         self.last_shot = pygame.time.get_ticks()
         self.width = self.image.get_width()
         self.height = self.image.get_height()
-        self.collision = False
+        self.collision = 1
 
     def update(self):
         speed = 0
@@ -71,12 +71,24 @@ class Player(pygame.sprite.Sprite):
             bullet_speed = 5
             self.last_shot = time_now
 
+        if gravity == 1:
+            self.y_velocity += 1
+            if self.y_velocity > 5:
+                self.y_velocity = 5
+
+        if gravity == 2:
+            self.y_velocity += 1
+            if self.y_velocity > -5:
+                self.y_velocity = -5
+
         # checking for collision
         for tile in world.tile_list:
+
             # check for collision in x direction
             if tile[1].colliderect(self.rect.x + speed, self.rect.y, self.width, self.height):
                 self.collision = True
                 speed = 0
+
             # check for collision in y direction
             if tile[1].colliderect(self.rect.x, self.rect.y + self.y_velocity, self.width, self.height):
                 self.collision = True
@@ -86,6 +98,7 @@ class Player(pygame.sprite.Sprite):
                 # check if above the ground i.e. falling
                 if self.y_velocity >= 0:
                     self.y_velocity = 0
+
             if tile[1].colliderect(self.rect.x, self.rect.y + self.y_velocity, self.width, self.height):
                 self.collision = True
                 if self.y_velocity == -5:
@@ -94,10 +107,9 @@ class Player(pygame.sprite.Sprite):
                 if self.y_velocity <= 0:
                     self.y_velocity = tile[1].top - self.rect.bottom
                     self.y_velocity = 0
-            if tile[0].get_rect().colliderect(player):
-                self.collision = False
 
         self.rect.x += speed
+
 
 
 class World:
