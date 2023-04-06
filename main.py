@@ -4,7 +4,7 @@ pygame.init()
 
 # slows down the animations
 start_frame = time.time()
-noi = 16
+noi = 6
 frames_per_second = 10
 
 # screen variables
@@ -38,7 +38,7 @@ for x in range(6):
     idle_images.append(pygame.image.load('Graphics/Player/Idle' + str(x) + '.png'))
 
 run_images = []
-for x in range(8):
+for x in range(6):
     run_images.append(pygame.image.load('Graphics/Player/Run' + str(x) + '.png'))
 
 
@@ -58,6 +58,9 @@ class Player(pygame.sprite.Sprite):
         self.width = self.image.get_width()
         self.height = self.image.get_height()
         self.value = 0
+        self.direction = False  # True is left, False is Right
+        self.gravity_position = False  # True is the roof, False is the floor
+        self.falling = True
 
     def update(self):
 
@@ -75,8 +78,10 @@ class Player(pygame.sprite.Sprite):
         # movement inputs
         if key[pygame.K_LEFT] and self.rect.left > 0:
             speed -= 8
+            self.direction = True
         if key[pygame.K_RIGHT] and self.rect.right < screen_width:
             speed += 8
+            self.direction = False
 
         time_now = pygame.time.get_ticks()
 
@@ -115,6 +120,7 @@ class Player(pygame.sprite.Sprite):
 
             # check for collision in y direction
             if tile[1].colliderect(self.rect.x, self.rect.y + self.y_velocity, self.width, self.height):
+                self.falling = False
                 if self.y_velocity == 5:
                     self.y_velocity = tile[1].bottom - self.rect.top
                     self.y_velocity = 0
@@ -123,6 +129,7 @@ class Player(pygame.sprite.Sprite):
                     self.y_velocity = 0
             # checks for collision in y direction when the gravity has been flipped
             if tile[1].colliderect(self.rect.x, self.rect.y + self.y_velocity, self.width, self.height):
+                self.falling = False
                 if self.y_velocity == -5:
                     self.y_velocity = 0
                 # check if above the ground
@@ -134,6 +141,7 @@ class Player(pygame.sprite.Sprite):
 
         # idle animation when the player is not moving
         if self.y_velocity == 0 and speed == 0:
+            self.value += 1
             if self.value >= len(idle_images):
                 self.value = 0
             self.image = idle_images[self.value]
@@ -144,8 +152,16 @@ class Player(pygame.sprite.Sprite):
             self.value += 1
             if self.value >= len(run_images):
                 self.value = 0
+
             self.image = run_images[self.value]
             self.value = int((time.time() - start_frame) * frames_per_second % noi)
+
+        if self.direction is True and self.falling is False:
+            player.image = pygame.transform.flip(player.image, True, False)
+
+        if self.gravity_position is True and self.falling is False:
+            player.image = pygame.transform.flip(player.image, False, True)
+
 
 
 class World:
@@ -306,15 +322,26 @@ def gravity_change():
     global gravity
     global bullet_speed
     global key
+
     # sets the gravity and changes the bullet speed
+    # also sets the player variables on whether or not the player is falling
+    # flips the player animations as well
     if key[pygame.K_DOWN] and gravity == 2:
         gravity = 1
         bullet_speed = -5
+        player.gravity_position = False
+        player.falling = True
+        player.image = pygame.transform.flip(player.image, False, True)
 
     # sets the gravity and changes the bullet speed
+    # also sets the player variables on whether or not the player is falling
+    # flips the player animations as well
     if key[pygame.K_UP] and gravity == 1:
         gravity = 2
         bullet_speed = 5
+        player.gravity_position = True
+        player.falling = True
+        player.image = pygame.transform.flip(player.image, False, True)
 
 
 player_group = pygame.sprite.Group()
