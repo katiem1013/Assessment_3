@@ -87,13 +87,13 @@ class Player(pygame.sprite.Sprite):
 
         # changes the way the bullets shoot when the gravity is changed
         if gravity == 1 and key[pygame.K_w] and time_now - self.last_shot > cool_down:
-            bullet = Bullets(self.rect.centerx, self.rect.top)
+            bullet = Bullets(self.rect.centerx + 10, self.rect.top)
             bullet_group.add(bullet)
             self.last_shot = time_now
 
         # changes the way the bullets shoot when the gravity is changed
         if gravity == 2 and key[pygame.K_w] and time_now - self.last_shot > cool_down:
-            bullet = Bullets(self.rect.centerx, self.rect.bottom)
+            bullet = Bullets(self.rect.centerx + 10, self.rect.bottom)
             bullet_group.add(bullet)
             self.last_shot = time_now
 
@@ -156,12 +156,11 @@ class Player(pygame.sprite.Sprite):
             self.image = run_images[self.value]
             self.value = int((time.time() - start_frame) * frames_per_second % noi)
 
+        # changes the direction of the player sprite based on the way they are walking
         if self.direction is True and self.falling is False:
             player.image = pygame.transform.flip(player.image, True, False)
-
         if self.gravity_position is True and self.falling is False:
             player.image = pygame.transform.flip(player.image, False, True)
-
 
 
 class World:
@@ -332,6 +331,7 @@ def gravity_change():
         player.gravity_position = False
         player.falling = True
         player.image = pygame.transform.flip(player.image, False, True)
+        bullet_group.empty()
 
     # sets the gravity and changes the bullet speed
     # also sets the player variables on whether or not the player is falling
@@ -342,13 +342,16 @@ def gravity_change():
         player.gravity_position = True
         player.falling = True
         player.image = pygame.transform.flip(player.image, False, True)
+        bullet_group.empty()
 
 
+# put the player in a group
 player_group = pygame.sprite.Group()
 
 player = Player(int(screen_width / 4), screen_height - 500)
 player_group.add(player)
 
+# puts the bullets in a group
 bullet_group = pygame.sprite.Group()
 
 run = True
@@ -360,6 +363,7 @@ while run:
     # allows the gravity change function to run within the game
     gravity_change()
 
+    # draws the level onto the screem
     world.draw()
 
     # allows the players to run within the game
