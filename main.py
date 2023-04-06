@@ -32,14 +32,23 @@ background_rect = background.get_rect()
 # to avoid having to write the whole thing out each time a key is pressed
 key = pygame.key.get_pressed()
 
+# gravity change cool down time
+cool_down_GC = 400
+
 # adds the idle images to a list so it can cycle through them
 idle_images = []
 for x in range(6):
     idle_images.append(pygame.image.load('Graphics/Player/Idle' + str(x) + '.png'))
 
+# adds the running images to a list so it can cycle through them
 run_images = []
 for x in range(6):
     run_images.append(pygame.image.load('Graphics/Player/Run' + str(x) + '.png'))
+
+# adds the falling images to a list so it can cycle through them
+falling_images = []
+for x in range(3):
+    falling_images.append(pygame.image.load('Graphics/Player/Falling' + str(x) + '.png'))
 
 
 class Player(pygame.sprite.Sprite):
@@ -60,7 +69,6 @@ class Player(pygame.sprite.Sprite):
         self.value = 0
         self.direction = False  # True is left, False is Right
         self.gravity_position = False  # True is the roof, False is the floor
-        self.falling = True
 
     def update(self):
 
@@ -86,13 +94,13 @@ class Player(pygame.sprite.Sprite):
         time_now = pygame.time.get_ticks()
 
         # changes the way the bullets shoot when the gravity is changed
-        if gravity == 1 and key[pygame.K_w] and time_now - self.last_shot > cool_down:
+        if gravity == 1 and key[pygame.K_w] and time_now - self.last_shot > cool_down and self.y_velocity == 0:
             bullet = Bullets(self.rect.centerx + 10, self.rect.top)
             bullet_group.add(bullet)
             self.last_shot = time_now
 
         # changes the way the bullets shoot when the gravity is changed
-        if gravity == 2 and key[pygame.K_w] and time_now - self.last_shot > cool_down:
+        if gravity == 2 and key[pygame.K_w] and time_now - self.last_shot > cool_down and self.y_velocity == 0:
             bullet = Bullets(self.rect.centerx + 10, self.rect.bottom)
             bullet_group.add(bullet)
             self.last_shot = time_now
@@ -120,7 +128,6 @@ class Player(pygame.sprite.Sprite):
 
             # check for collision in y direction
             if tile[1].colliderect(self.rect.x, self.rect.y + self.y_velocity, self.width, self.height):
-                self.falling = False
                 if self.y_velocity == 5:
                     self.y_velocity = tile[1].bottom - self.rect.top
                     self.y_velocity = 0
@@ -129,7 +136,6 @@ class Player(pygame.sprite.Sprite):
                     self.y_velocity = 0
             # checks for collision in y direction when the gravity has been flipped
             if tile[1].colliderect(self.rect.x, self.rect.y + self.y_velocity, self.width, self.height):
-                self.falling = False
                 if self.y_velocity == -5:
                     self.y_velocity = 0
                 # check if above the ground
@@ -156,10 +162,19 @@ class Player(pygame.sprite.Sprite):
             self.image = run_images[self.value]
             self.value = int((time.time() - start_frame) * frames_per_second % noi)
 
+        # falling animation
+        if self.y_velocity != 0:
+            self.value += 1
+            if self.value >= len(falling_images):
+                self.value = 0
+
+            self.image = falling_images[self.value]
+            self.value = int((time.time() - start_frame) * frames_per_second % noi)
+
         # changes the direction of the player sprite based on the way they are walking
-        if self.direction is True and self.falling is False:
+        if self.direction is True:
             player.image = pygame.transform.flip(player.image, True, False)
-        if self.gravity_position is True and self.falling is False:
+        if self.gravity_position is True:
             player.image = pygame.transform.flip(player.image, False, True)
 
 
@@ -279,12 +294,12 @@ class World:
 
 
 world_data = [
-    [8, 4, 4, 7, 8, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7],
-    [2, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-    [2, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-    [2, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-    [2, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-    [2, 0, 0, 11, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [8, 4, 4, 7, 8, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7, 8, 4, 4, 7],
+    [2, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 3],
+    [2, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 3],
+    [2, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 3],
+    [2, 0, 0, 3, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 3],
+    [2, 0, 0, 11, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 12, 0, 0, 3],
     [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
     [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
     [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
@@ -321,31 +336,35 @@ def gravity_change():
     global gravity
     global bullet_speed
     global key
+    global cool_down_GC
+
+    # gives switching gravity a cool down in order to stop it being spammed
+    cool_down_GC += clock.get_time()
+    if cool_down_GC > 400:
+        cool_down_GC = 0
 
     # sets the gravity and changes the bullet speed
     # also sets the player variables on whether or not the player is falling
     # flips the player animations as well
-    if key[pygame.K_DOWN] and gravity == 2:
+    if key[pygame.K_DOWN] and gravity == 2 and cool_down_GC == 0:
         gravity = 1
         bullet_speed = -5
         player.gravity_position = False
-        player.falling = True
         player.image = pygame.transform.flip(player.image, False, True)
         bullet_group.empty()
 
     # sets the gravity and changes the bullet speed
     # also sets the player variables on whether or not the player is falling
     # flips the player animations as well
-    if key[pygame.K_UP] and gravity == 1:
+    if key[pygame.K_UP] and gravity == 1 and cool_down_GC == 0:
         gravity = 2
         bullet_speed = 5
         player.gravity_position = True
-        player.falling = True
         player.image = pygame.transform.flip(player.image, False, True)
         bullet_group.empty()
 
 
-# put the player in a group
+# puts the player in a group
 player_group = pygame.sprite.Group()
 
 player = Player(int(screen_width / 4), screen_height - 500)
@@ -353,6 +372,9 @@ player_group.add(player)
 
 # puts the bullets in a group
 bullet_group = pygame.sprite.Group()
+
+# sets the cool down to 0
+cool_down_GC = 0
 
 run = True
 while run:
@@ -363,7 +385,7 @@ while run:
     # allows the gravity change function to run within the game
     gravity_change()
 
-    # draws the level onto the screem
+    # draws the level onto the screen
     world.draw()
 
     # allows the players to run within the game
