@@ -1,5 +1,11 @@
 import pygame
+import time
 pygame.init()
+
+# slows down the animations
+start_frame = time.time()
+noi = 16
+frames_per_second = 10
 
 # screen variables
 screen_width = 1920
@@ -19,13 +25,21 @@ gravity = 1  # 1 has the player at the bottom, 2 has the player at the top
 # player variables
 bullet_speed = -5
 
-# background colours
+# background image and rect
 background = pygame.image.load('Graphics/Background.png').convert()
-
-# background rects
 background_rect = background.get_rect()
 
+# to avoid having to write the whole thing out each time a key is pressed
 key = pygame.key.get_pressed()
+
+# adds the idle images to a list so it can cycle through them
+idle_images = []
+for x in range(6):
+    idle_images.append(pygame.image.load('Graphics/Player/Idle' + str(x) + '.png'))
+
+run_images = []
+for x in range(8):
+    run_images.append(pygame.image.load('Graphics/Player/Run' + str(x) + '.png'))
 
 
 class Player(pygame.sprite.Sprite):
@@ -34,7 +48,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load('Graphics/Player.png').convert()
+        self.image = idle_images[0]
         self.y_velocity = 5
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -43,14 +57,21 @@ class Player(pygame.sprite.Sprite):
         self.last_shot = pygame.time.get_ticks()
         self.width = self.image.get_width()
         self.height = self.image.get_height()
-        self.collision = 1
+        self.value = 0
 
     def update(self):
-        speed = 0
-        self.rect.y += self.y_velocity
-        cool_down = 500  # milliseconds
+
+        # global variables
         global bullet_speed
         global key
+
+        # setting speed and cool down rate
+        speed = 0
+        cool_down = 500  # milliseconds
+
+        # setting the y position of the player to be the y velocity
+        self.rect.y += self.y_velocity
+
         # movement inputs
         if key[pygame.K_LEFT] and self.rect.left > 0:
             speed -= 8
@@ -59,25 +80,29 @@ class Player(pygame.sprite.Sprite):
 
         time_now = pygame.time.get_ticks()
 
+        # changes the way the bullets shoot when the gravity is changed
         if gravity == 1 and key[pygame.K_w] and time_now - self.last_shot > cool_down:
             bullet = Bullets(self.rect.centerx, self.rect.top)
             bullet_group.add(bullet)
-            bullet_speed = -5
             self.last_shot = time_now
 
+        # changes the way the bullets shoot when the gravity is changed
         if gravity == 2 and key[pygame.K_w] and time_now - self.last_shot > cool_down:
             bullet = Bullets(self.rect.centerx, self.rect.bottom)
             bullet_group.add(bullet)
-            bullet_speed = 5
             self.last_shot = time_now
 
+        # changes the way the player is falling when the gravity is changed
         if gravity == 1:
             self.y_velocity += 1
+            # if the velocity goes beyond 5 it will set it back to 5
             if self.y_velocity > 5:
                 self.y_velocity = 5
 
+        # changes the way the player is falling when the gravity is changed
         if gravity == 2:
             self.y_velocity += 1
+            # if the velocity goes beyond -5 it will set it back to -5
             if self.y_velocity > -5:
                 self.y_velocity = -5
 
@@ -86,30 +111,41 @@ class Player(pygame.sprite.Sprite):
 
             # check for collision in x direction
             if tile[1].colliderect(self.rect.x + speed, self.rect.y, self.width, self.height):
-                self.collision = True
                 speed = 0
 
             # check for collision in y direction
             if tile[1].colliderect(self.rect.x, self.rect.y + self.y_velocity, self.width, self.height):
-                self.collision = True
                 if self.y_velocity == 5:
                     self.y_velocity = tile[1].bottom - self.rect.top
                     self.y_velocity = 0
-                # check if above the ground i.e. falling
+                # check if above the ground
                 if self.y_velocity >= 0:
                     self.y_velocity = 0
-
+            # checks for collision in y direction when the gravity has been flipped
             if tile[1].colliderect(self.rect.x, self.rect.y + self.y_velocity, self.width, self.height):
-                self.collision = True
                 if self.y_velocity == -5:
                     self.y_velocity = 0
-                # check if above the ground i.e. falling
+                # check if above the ground
                 if self.y_velocity <= 0:
                     self.y_velocity = tile[1].top - self.rect.bottom
                     self.y_velocity = 0
 
         self.rect.x += speed
 
+        # idle animation when the player is not moving
+        if self.y_velocity == 0 and speed == 0:
+            if self.value >= len(idle_images):
+                self.value = 0
+            self.image = idle_images[self.value]
+            self.value = int((time.time() - start_frame) * frames_per_second % noi)
+
+        # running animation when the player is moving
+        if self.y_velocity == 0 and speed != 0:
+            self.value += 1
+            if self.value >= len(run_images):
+                self.value = 0
+            self.image = run_images[self.value]
+            self.value = int((time.time() - start_frame) * frames_per_second % noi)
 
 
 class World:
@@ -270,17 +306,15 @@ def gravity_change():
     global gravity
     global bullet_speed
     global key
+    # sets the gravity and changes the bullet speed
     if key[pygame.K_DOWN] and gravity == 2:
         gravity = 1
-        player.y_velocity = 5
         bullet_speed = -5
-        player.image = pygame.transform.rotate(player.image, 180)
 
+    # sets the gravity and changes the bullet speed
     if key[pygame.K_UP] and gravity == 1:
         gravity = 2
-        player.y_velocity = -5
         bullet_speed = 5
-        player.image = pygame.transform.rotate(player.image, 180)
 
 
 player_group = pygame.sprite.Group()
@@ -304,8 +338,6 @@ while run:
     # allows the players to run within the game
     player_group.update()
     player_group.draw(screen)
-
-    print(player.collision)
 
     bullet_group.update()
     bullet_group.draw(screen)
