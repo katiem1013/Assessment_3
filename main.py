@@ -62,7 +62,9 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.health = 100
+        self.current_health = 1000
+        self.max_health = 1000
+        self.health_ratio = self.max_health / 400
         self.last_shot = pygame.time.get_ticks()
         self.width = self.image.get_width()
         self.height = self.image.get_height()
@@ -79,6 +81,9 @@ class Player(pygame.sprite.Sprite):
         # setting speed and cool down rate
         speed = 0
         cool_down = 500  # milliseconds
+
+        # making the health bar update
+        self.health_bar()
 
         # setting the y position of the player to be the y velocity
         self.rect.y += self.y_velocity
@@ -176,6 +181,22 @@ class Player(pygame.sprite.Sprite):
             player.image = pygame.transform.flip(player.image, True, False)
         if self.gravity_position is True:
             player.image = pygame.transform.flip(player.image, False, True)
+
+    def get_damage(self, amount):
+        if self.current_health > 0:
+            self.current_health -= amount
+        if self.current_health <= 0:
+            self.current_health = 0
+
+    def get_health(self, amount):
+        if self.current_health < self.max_health:
+            self.current_health += amount
+        if self.current_health >= self.max_health:
+            self.current_health = self.current_health
+
+    def health_bar(self):
+        pygame.draw.rect(screen, (255, 0, 0), (10, 10, self.current_health / self.health_ratio, 25))
+        pygame.draw.rect(screen, (255,255,255), (10, 10, 400, 25), 4)
 
 
 class World:
@@ -304,7 +325,7 @@ world_data = [
     [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
     [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
     [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
-    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
+    [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 13, 0, 0, 3],
     [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 10, 0, 0, 3],
     [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 3],
     [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 3],
