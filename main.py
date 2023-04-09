@@ -149,9 +149,11 @@ class Player(pygame.sprite.Sprite):
                     self.y_velocity = tile[1].top - self.rect.bottom
                     self.y_velocity = 0
 
-
-
-            print(world.tile_list[13])
+        # check for collision with lava
+        if pygame.sprite.spritecollide(self, spike_group, False):
+            self.get_damage(10)
+            self.y_velocity = tile[1].top - self.rect.bottom
+            self.y_velocity = 0
 
         self.rect.x += speed
 
@@ -212,6 +214,18 @@ player = Player(int(screen_width / 4), screen_height - 500)
 player_group.add(player)
 
 
+# spikes that will deal damage to the player when stood on
+class Spike(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        spikes = pygame.image.load('Graphics/Spike.png')
+        self.image = pygame.transform.scale(spikes, (tile_size, tile_size))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+
+# sets up the tile map to make the world
 class World:
     def __init__(self, data):
         self.tile_list = []
@@ -229,8 +243,8 @@ class World:
         outside_top_right = pygame.image.load('Graphics/CornerRight.png')
         outside_bottom_left = pygame.image.load('Graphics/BottomLeft.png')
         outside_bottom_right = pygame.image.load('Graphics/BottomRight.png')
-        self.spikes = pygame.image.load('Graphics/Spike.png')
 
+        # sets the numbers for each tile to be added to the list
         row_count = 0
         for row in data:
             col_count = 0
@@ -321,12 +335,8 @@ class World:
                     self.tile_list.append(tile)
 
                 if tile == 13:
-                    image = self.spikes
-                    image_rect = image.get_rect()
-                    image_rect.x = col_count * tile_size
-                    image_rect.y = row_count * tile_size
-                    tile = (image, image_rect)
-                    self.tile_list.append(tile)
+                    spikes = Spike(col_count * tile_size, row_count * tile_size)
+                    spike_group.add(spikes)
 
                 col_count += 1
             row_count += 1
@@ -355,6 +365,8 @@ world_data = [
     [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 0, 3],
     [6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 6, 1, 1, 5]
 ]
+
+spike_group = pygame.sprite.Group()
 
 world = World(world_data)
 
@@ -429,8 +441,15 @@ while run:
     player_group.update()
     player_group.draw(screen)
 
+    # allows the players bullets to run within the game
     bullet_group.update()
     bullet_group.draw(screen)
+
+    # draws the spikes onto the screen
+    spike_group.draw(screen)
+
+    if player.current_health <= 0:
+        run = False
 
     # allows key to be used instead of typing out the whole thing
     key = pygame.key.get_pressed()
