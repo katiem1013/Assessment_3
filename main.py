@@ -33,7 +33,7 @@ background_rect = background.get_rect()
 key = pygame.key.get_pressed()
 
 # gravity change cool down time
-cool_down_GC = 400
+cool_down_GC = 300
 
 # adds the idle images to a list so it can cycle through them
 idle_images = []
@@ -139,6 +139,7 @@ class Player(pygame.sprite.Sprite):
                 # check if above the ground
                 if self.y_velocity >= 0:
                     self.y_velocity = 0
+
             # checks for collision in y direction when the gravity has been flipped
             if tile[1].colliderect(self.rect.x, self.rect.y + self.y_velocity, self.width, self.height):
                 if self.y_velocity == -5:
@@ -147,6 +148,10 @@ class Player(pygame.sprite.Sprite):
                 if self.y_velocity <= 0:
                     self.y_velocity = tile[1].top - self.rect.bottom
                     self.y_velocity = 0
+
+
+
+            print(world.tile_list[13])
 
         self.rect.x += speed
 
@@ -183,6 +188,7 @@ class Player(pygame.sprite.Sprite):
             player.image = pygame.transform.flip(player.image, False, True)
 
     def get_damage(self, amount):
+
         if self.current_health > 0:
             self.current_health -= amount
         if self.current_health <= 0:
@@ -195,8 +201,15 @@ class Player(pygame.sprite.Sprite):
             self.current_health = self.current_health
 
     def health_bar(self):
-        pygame.draw.rect(screen, (255, 0, 0), (10, 10, self.current_health / self.health_ratio, 25))
-        pygame.draw.rect(screen, (255,255,255), (10, 10, 400, 25), 4)
+        pygame.draw.rect(screen, (255, 87, 51), (10, 10, self.current_health / self.health_ratio, 25))
+        pygame.draw.rect(screen, (170, 40, 10), (10, 10, 400, 25), 4)
+
+
+# puts the player in a group
+player_group = pygame.sprite.Group()
+
+player = Player(int(screen_width / 4), screen_height - 500)
+player_group.add(player)
 
 
 class World:
@@ -216,6 +229,7 @@ class World:
         outside_top_right = pygame.image.load('Graphics/CornerRight.png')
         outside_bottom_left = pygame.image.load('Graphics/BottomLeft.png')
         outside_bottom_right = pygame.image.load('Graphics/BottomRight.png')
+        self.spikes = pygame.image.load('Graphics/Spike.png')
 
         row_count = 0
         for row in data:
@@ -306,6 +320,14 @@ class World:
                     tile = (image, image_rect)
                     self.tile_list.append(tile)
 
+                if tile == 13:
+                    image = self.spikes
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
+
                 col_count += 1
             row_count += 1
 
@@ -361,7 +383,7 @@ def gravity_change():
 
     # gives switching gravity a cool down in order to stop it being spammed
     cool_down_GC += clock.get_time()
-    if cool_down_GC > 400:
+    if cool_down_GC > 300:
         cool_down_GC = 0
 
     # sets the gravity and changes the bullet speed
@@ -384,12 +406,6 @@ def gravity_change():
         player.image = pygame.transform.flip(player.image, False, True)
         bullet_group.empty()
 
-
-# puts the player in a group
-player_group = pygame.sprite.Group()
-
-player = Player(int(screen_width / 4), screen_height - 500)
-player_group.add(player)
 
 # puts the bullets in a group
 bullet_group = pygame.sprite.Group()
