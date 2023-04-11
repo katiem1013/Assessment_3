@@ -18,10 +18,9 @@ noi = 6
 frames_per_second = 10
 
 
-
-
 pygame.display.set_caption('Assessment 3')
 clock = pygame.time.Clock()  # clock to set the frame rate
+font = pygame.font.Font(None, 40)
 
 
 # screen flipping variables
@@ -273,33 +272,90 @@ bullet_group = pygame.sprite.Group()
 # sets the cool down to 0
 cool_down_GC = 0
 
+
+def draw_pause():
+
+    global start_menu
+    global game_paused
+    global run
+
+    # resume game button
+    resume_button = pygame.draw.rect(screen, (181, 80, 136), [830, 200, 260, 70], 0, 15)
+    pygame.draw.rect(screen, (181, 80, 136), [830, 200, 260, 70], 5, 5)
+    text = font.render('Resume', True, 'black')
+    screen.blit(text, (900, 222))
+    if resume_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
+        game_paused = False
+    else:
+        game_paused = True
+
+    # main menu button
+    menu_button = pygame.draw.rect(screen, (181, 80, 136), [830, 400, 260, 70], 0, 15)
+    pygame.draw.rect(screen, (181, 80, 136), [830, 400, 260, 70], 5, 5)
+    text = font.render('Main Menu', True, 'black')
+    screen.blit(text, (885, 422))
+    if menu_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
+        start_menu = True
+    else:
+        start_menu = False
+
+    # exit game button
+    exit_button = pygame.draw.rect(screen, (181, 80, 136), [830, 600, 260, 70], 0, 15)
+    pygame.draw.rect(screen, (181, 80, 136), [830, 600, 260, 70], 5, 5)
+    text = font.render('Exit', True, 'black')
+    screen.blit(text, (930, 622))
+    if exit_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
+        run = False
+    else:
+        run = True
+
+
+def draw_menu():
+    pygame.draw.rect(screen, 'black', [100, 100, 300, 300])
+
+
 run = True
 while run:
 
-    if start_menu is False:
-        # makes the background appear on the screen
-        screen.blit(background, (0, 0))
-        # allows the gravity change function to run within the game
-        gravity_change()
+    # makes the background appear on the screen
+    screen.blit(background, (0, 0))
+
+    if start_menu:
+        draw_menu()
+
+    # pause menu
+    if game_paused is True and start_menu is False:
+        draw_pause()
+    if key[pygame.K_ESCAPE]:
+        game_paused = True
+
+
+
+    #if level_1 is True:
+        # draws the level onto the screen
+        #level1.draw()
+        # draws the spikes onto the screen
+        #spike_group.draw(screen)
+
+    #if level_2 is True:
+        ## draws the level onto the screen
+        #level2.draw()
+        # draws the spikes onto the screen
+        #spike_group.draw(screen)
+
+    #if start_menu is False:
 
         # allows the players to run within the game
-        player_group.update()
-        player_group.draw(screen)
+       # player_group.update()
+        #player_group.draw(screen)
+
+        # allows the gravity change function to run within the game
+        #gravity_change()
+
         # allows the players bullets to run within the game
-        bullet_group.update()
-        bullet_group.draw(screen)
+        #bullet_group.update()
+        #bullet_group.draw(screen)
 
-    if level_1 is True:
-        # draws the level onto the screen
-        level1.draw()
-        # draws the spikes onto the screen
-        spike_group.draw(screen)
-
-    if level_2 is True:
-        # draws the level onto the screen
-        level2.draw()
-        # draws the spikes onto the screen
-        spike_group.draw(screen)
 
     if player.current_health <= 0:
         run = False
@@ -310,9 +366,7 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-        # escape turns run to false
-        if key[pygame.K_ESCAPE]:
-            run = False
+
 
 
 

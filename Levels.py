@@ -138,9 +138,11 @@ class World:
                 col_count += 1
             row_count += 1
 
+
     def draw(self):
         for tile in self.tile_list:
             screen.blit(tile[0], tile[1])
+
 
 
 world_data1 = [
