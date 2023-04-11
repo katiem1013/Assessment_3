@@ -6,11 +6,12 @@ pygame.init()
 
 # what level is being selected
 start_menu = True
+level_select = False
 level_1 = False
 level_2 = False
-
-# game variables
 game_paused = False
+playing_game = False
+player_move = False
 
 # slows down the animations
 start_frame = time.time()
@@ -81,6 +82,7 @@ class Player(pygame.sprite.Sprite):
         # global variables
         global bullet_speed
         global key
+        global player_move
 
         # setting speed and cool down rate
         speed = 0
@@ -93,36 +95,38 @@ class Player(pygame.sprite.Sprite):
         self.rect.y += self.y_velocity
 
         # movement inputs
-        if key[pygame.K_LEFT] and self.rect.left > 0:
+        if key[pygame.K_LEFT] and self.rect.left > 0 and player_move is True:
             speed -= 8
             self.direction = True
-        if key[pygame.K_RIGHT] and self.rect.right < screen_width:
+        if key[pygame.K_RIGHT] and self.rect.right < screen_width and player_move is True:
             speed += 8
             self.direction = False
 
         time_now = pygame.time.get_ticks()
 
         # changes the way the bullets shoot when the gravity is changed
-        if gravity == 1 and key[pygame.K_w] and time_now - self.last_shot > cool_down and self.y_velocity == 0:
+        if gravity == 1 and key[pygame.K_w] and time_now - self.last_shot > cool_down and self.y_velocity == 0\
+                and player_move is True:
             bullet = Bullets(self.rect.centerx + 10, self.rect.top)
             bullet_group.add(bullet)
             self.last_shot = time_now
 
         # changes the way the bullets shoot when the gravity is changed
-        if gravity == 2 and key[pygame.K_w] and time_now - self.last_shot > cool_down and self.y_velocity == 0:
+        if gravity == 2 and key[pygame.K_w] and time_now - self.last_shot > cool_down and self.y_velocity == 0\
+                and player_move is True:
             bullet = Bullets(self.rect.centerx + 10, self.rect.bottom)
             bullet_group.add(bullet)
             self.last_shot = time_now
 
         # changes the way the player is falling when the gravity is changed
-        if gravity == 1:
+        if gravity == 1 and player_move is True:
             self.y_velocity += 1
             # if the velocity goes beyond 5 it will set it back to 5
             if self.y_velocity > 5:
                 self.y_velocity = 5
 
         # changes the way the player is falling when the gravity is changed
-        if gravity == 2:
+        if gravity == 2 and player_move is True:
             self.y_velocity += 1
             # if the velocity goes beyond -5 it will set it back to -5
             if self.y_velocity > -5:
@@ -154,7 +158,7 @@ class Player(pygame.sprite.Sprite):
                     self.y_velocity = 0
 
         # check for collision with lava
-        if pygame.sprite.spritecollide(self, spike_group, False):
+        if pygame.sprite.spritecollide(self, spike_group, False) and player_move is True:
             self.get_damage(10)
             self.y_velocity = tile[1].top - self.rect.bottom
             self.y_velocity = 0
@@ -162,7 +166,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += speed
 
         # idle animation when the player is not moving
-        if self.y_velocity == 0 and speed == 0:
+        if self.y_velocity == 0 and speed == 0 and player_move is True:
             self.value += 1
             if self.value >= len(idle_images):
                 self.value = 0
@@ -170,7 +174,7 @@ class Player(pygame.sprite.Sprite):
             self.value = int((time.time() - start_frame) * frames_per_second % noi)
 
         # running animation when the player is moving
-        if self.y_velocity == 0 and speed != 0:
+        if self.y_velocity == 0 and speed != 0 and player_move is True:
             self.value += 1
             if self.value >= len(run_images):
                 self.value = 0
@@ -179,7 +183,7 @@ class Player(pygame.sprite.Sprite):
             self.value = int((time.time() - start_frame) * frames_per_second % noi)
 
         # falling animation
-        if self.y_velocity != 0:
+        if self.y_velocity != 0 and player_move is True:
             self.value += 1
             if self.value >= len(falling_images):
                 self.value = 0
@@ -188,16 +192,16 @@ class Player(pygame.sprite.Sprite):
             self.value = int((time.time() - start_frame) * frames_per_second % noi)
 
         # changes the direction of the player sprite based on the way they are walking
-        if self.direction is True:
+        if self.direction is True and player_move is True:
             player.image = pygame.transform.flip(player.image, True, False)
         if self.gravity_position is True:
             player.image = pygame.transform.flip(player.image, False, True)
 
     def get_damage(self, amount):
 
-        if self.current_health > 0:
+        if self.current_health > 0 and player_move is True:
             self.current_health -= amount
-        if self.current_health <= 0:
+        if self.current_health <= 0 and player_move is True:
             self.current_health = 0
 
     def get_health(self, amount):
@@ -248,7 +252,7 @@ def gravity_change():
     # sets the gravity and changes the bullet speed
     # also sets the player variables on whether or not the player is falling
     # flips the player animations as well
-    if key[pygame.K_DOWN] and gravity == 2 and cool_down_GC == 0:
+    if key[pygame.K_DOWN] and gravity == 2 and cool_down_GC == 0 and player_move is True:
         gravity = 1
         bullet_speed = -5
         player.gravity_position = False
@@ -258,7 +262,7 @@ def gravity_change():
     # sets the gravity and changes the bullet speed
     # also sets the player variables on whether or not the player is falling
     # flips the player animations as well
-    if key[pygame.K_UP] and gravity == 1 and cool_down_GC == 0:
+    if key[pygame.K_UP] and gravity == 1 and cool_down_GC == 0 and player_move is True:
         gravity = 2
         bullet_speed = 5
         player.gravity_position = True
@@ -275,43 +279,143 @@ cool_down_GC = 0
 
 def draw_pause():
 
-    global start_menu
     global game_paused
+    global start_menu
     global run
+    global playing_game
+    global level_1
+    global level_2
+
+    pygame.draw.rect(screen, (24, 20, 37), [810, 280, 300, 310], 0, 15)
 
     # resume game button
-    resume_button = pygame.draw.rect(screen, (181, 80, 136), [830, 200, 260, 70], 0, 15)
-    pygame.draw.rect(screen, (181, 80, 136), [830, 200, 260, 70], 5, 5)
+    resume_button = pygame.draw.rect(screen, (181, 80, 136), [830, 300, 260, 70], 0, 15)
+    pygame.draw.rect(screen, (181, 80, 136), [830, 300, 260, 70], 5, 15)
     text = font.render('Resume', True, 'black')
-    screen.blit(text, (900, 222))
-    if resume_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
-        game_paused = False
-    else:
-        game_paused = True
+    screen.blit(text, (900, 322))
 
     # main menu button
     menu_button = pygame.draw.rect(screen, (181, 80, 136), [830, 400, 260, 70], 0, 15)
-    pygame.draw.rect(screen, (181, 80, 136), [830, 400, 260, 70], 5, 5)
+    pygame.draw.rect(screen, (181, 80, 136), [830, 400, 260, 70], 5, 15)
     text = font.render('Main Menu', True, 'black')
     screen.blit(text, (885, 422))
-    if menu_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
-        start_menu = True
-    else:
-        start_menu = False
 
     # exit game button
-    exit_button = pygame.draw.rect(screen, (181, 80, 136), [830, 600, 260, 70], 0, 15)
-    pygame.draw.rect(screen, (181, 80, 136), [830, 600, 260, 70], 5, 5)
+    exit_button = pygame.draw.rect(screen, (181, 80, 136), [830, 500, 260, 70], 0, 15)
+    pygame.draw.rect(screen, (181, 80, 136), [830, 500, 260, 70], 5, 15)
     text = font.render('Exit', True, 'black')
-    screen.blit(text, (930, 622))
-    if exit_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
-        run = False
-    else:
-        run = True
+    screen.blit(text, (930, 522))
+
+    for event in pygame.event.get():
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+
+                if resume_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
+                    game_paused = False
+                else:
+                    game_paused = True
+
+                if menu_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
+                    pygame.time.delay(500)
+                    start_menu = True
+                    playing_game = False
+                    level_1 = False
+                    level_2 = False
+
+                if exit_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
+                    run = False
+                else:
+                    run = True
 
 
-def draw_menu():
-    pygame.draw.rect(screen, 'black', [100, 100, 300, 300])
+def draw_start_menu():
+
+    global game_paused
+    global start_menu
+    global level_select
+    global level_1
+    global run
+
+    pygame.draw.rect(screen, (24, 20, 37), [810, 325, 300, 220], 0, 15)
+
+    # start menu button
+    start_button = pygame.draw.rect(screen, (181, 80, 136), [830, 350, 260, 70], 0, 15)
+    pygame.draw.rect(screen, (181, 80, 136), [830, 350, 260, 70], 5, 15)
+    text = font.render('Start', True, 'black')
+    screen.blit(text, (925, 372))
+
+    # exit game button
+    exit_button = pygame.draw.rect(screen, (181, 80, 136), [830, 450, 260, 70], 0, 15)
+    pygame.draw.rect(screen, (181, 80, 136), [830, 450, 260, 70], 5, 15)
+    text = font.render('Exit', True, 'black')
+    screen.blit(text, (930, 472))
+
+    for event in pygame.event.get():
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+
+                if start_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
+                    pygame.time.delay(500)
+                    level_select = True
+                    start_menu = False
+                    game_paused = False
+
+                if exit_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
+                    run = False
+                else:
+                    run = True
+
+
+def draw_level_select():
+
+    global level_1
+    global level_2
+    global start_menu
+    global level_select
+    global playing_game
+    global player_move
+
+    pygame.draw.rect(screen, (24, 20, 37), [810, 280, 300, 310], 0, 15)
+
+    # start menu button
+    level1_button = pygame.draw.rect(screen, (181, 80, 136), [830, 300, 260, 70], 0, 15)
+    pygame.draw.rect(screen, (181, 80, 136), [830, 300, 260, 70], 0, 15)
+    text = font.render('Level 1', True, 'black')
+    screen.blit(text, (910, 322))
+
+    # back button
+    back_button = pygame.draw.rect(screen, (181, 80, 136), [830, 500, 260, 70], 0, 15)
+    pygame.draw.rect(screen, (181, 80, 136), [830, 500, 260, 70], 5, 15)
+    text = font.render('Back', True, 'black')
+    screen.blit(text, (930, 522))
+
+    # start menu button
+    level2_button = pygame.draw.rect(screen, (181, 80, 136), [830, 400, 260, 70], 0, 15)
+    pygame.draw.rect(screen, (181, 80, 136), [830, 400, 260, 70], 0, 15)
+    text = font.render('Level 2', True, 'black')
+    screen.blit(text, (910, 422))
+
+    for event in pygame.event.get():
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+
+                if level1_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
+                    level_1 = True
+                    level_select = False
+                    playing_game = True
+                    player_move = True
+                    start_menu = False
+
+                if level2_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
+                    level_2 = True
+                    level_select = False
+                    playing_game = True
+                    player_move = True
+                    start_menu = False
+
+                if back_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
+                    start_menu = True
+                    level_select = False
 
 
 run = True
@@ -320,42 +424,44 @@ while run:
     # makes the background appear on the screen
     screen.blit(background, (0, 0))
 
-    if start_menu:
-        draw_menu()
+    # start menu
+    if start_menu is True:
+        draw_start_menu()
+
+    if level_select and start_menu is False:
+        draw_level_select()
 
     # pause menu
-    if game_paused is True and start_menu is False:
+    if game_paused is True and start_menu is False and level_select is False:
         draw_pause()
     if key[pygame.K_ESCAPE]:
         game_paused = True
+        player_move = False
 
-
-
-    #if level_1 is True:
+    if level_1 is True:
         # draws the level onto the screen
-        #level1.draw()
+        level1.draw()
         # draws the spikes onto the screen
-        #spike_group.draw(screen)
+        spike_group.draw(screen)
 
-    #if level_2 is True:
-        ## draws the level onto the screen
-        #level2.draw()
+    if level_2 is True:
+        # draws the level onto the screen
+        level2.draw()
         # draws the spikes onto the screen
-        #spike_group.draw(screen)
+        spike_group.draw(screen)
 
-    #if start_menu is False:
+    if playing_game is True:
 
         # allows the players to run within the game
-       # player_group.update()
-        #player_group.draw(screen)
+        player_group.update()
+        player_group.draw(screen)
 
         # allows the gravity change function to run within the game
-        #gravity_change()
+        gravity_change()
 
         # allows the players bullets to run within the game
-        #bullet_group.update()
-        #bullet_group.draw(screen)
-
+        bullet_group.update()
+        bullet_group.draw(screen)
 
     if player.current_health <= 0:
         run = False
@@ -366,9 +472,6 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-
-
-
 
     pygame.display.flip()
     pygame.display.update()
