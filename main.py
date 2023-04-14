@@ -1,10 +1,7 @@
-import pygame
 import time
 from Levels import *
 
 pygame.init()
-
-
 
 # what level is being selected
 start_menu = True
@@ -28,12 +25,8 @@ pygame.display.set_caption('Assessment 3')
 clock = pygame.time.Clock()  # clock to set the frame rate
 font = pygame.font.Font(None, 40)
 
-# parallax variables
+# controls the parallax background
 background_scroll = 0
-
-# world scrolling
-scroll_limit = 200
-screen_scroll = 0
 
 # screen flipping variables
 gravity = 1  # 1 has the player at the bottom, 2 has the player at the top
@@ -52,6 +45,7 @@ background_images = []
 for i in range(5):
     background = pygame.image.load(f'Graphics/Background{i}.png').convert_alpha()
     background_images.append(background)
+
 background_width = background_images[0].get_width()
 
 
@@ -112,7 +106,6 @@ class Player(pygame.sprite.Sprite):
 
         # setting speed and cool down rate
         speed = 0
-        self.speed = speed
         cool_down = 500  # milliseconds
 
         # making the health bar update
@@ -124,11 +117,11 @@ class Player(pygame.sprite.Sprite):
         # movement inputs
         if key[pygame.K_a] and self.rect.left > 0 and player_move is True and background_scroll > 0:
             speed -= 8
-            background_scroll -= 3
+            background_scroll -= 1
             self.direction = True
         if key[pygame.K_d] and self.rect.right < screen_width and player_move is True and background_scroll < 3000:
             speed += 8
-            background_scroll += 3
+            background_scroll += 1
             self.direction = False
 
         time_now = pygame.time.get_ticks()
@@ -196,7 +189,6 @@ class Player(pygame.sprite.Sprite):
 
         self.rect.x += speed
 
-
         # idle animation when the player is not moving
         if self.y_velocity == 0 and speed == 0 and player_move is True:
             self.value += 1
@@ -232,6 +224,13 @@ class Player(pygame.sprite.Sprite):
         # checks if the players health goes over the max amount of damage
         if self.current_health >= self.max_health:
             self.current_health = self.current_health
+
+        self.speed = speed
+
+        # update scroll based on player position
+        if (self.rect.right > screen_width - 64 and background_scroll < (500 * tile_size) - screen_width) \
+                or (self.rect.left < 64 and background_scroll > abs(self.speed)):
+            self.rect.x -= self.speed
 
     def get_damage(self, amount):
 
@@ -437,7 +436,7 @@ def draw_level_select():
                     playing_game = True
                     player_move = True
                     start_menu = False
-                    player.rect.x = 250
+                    player.rect.x = 64
                     player.rect.y = screen_height - 200
                     player.current_health = player.max_health
 
@@ -447,13 +446,164 @@ def draw_level_select():
                     playing_game = True
                     player_move = True
                     start_menu = False
-                    player.rect.x = 250
+                    player.rect.x = 64
                     player.rect.y = screen_height - 200
                     player.current_health = player.max_health
 
                 if back_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
                     start_menu = True
                     level_select = False
+
+
+# spikes that will deal damage to the player when stood on
+class Spike(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        spikes = pygame.image.load('Graphics/Spike.png')
+        self.image = pygame.transform.scale(spikes, (tile_size, tile_size))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+    def update(self):
+        self.rect.x -= player.speed
+
+
+# sets up the tile map to make the world
+class World:
+    def __init__(self, data):
+
+        self.tile_list = []
+
+        # tile map images
+        main_floor = pygame.image.load('Graphics/FloorMain.png')
+        right_side = pygame.image.load('Graphics/SideLeft.png')
+        left_side = pygame.image.load('Graphics/SideRight.png')
+        main_roof = pygame.image.load('Graphics/BottomMiddle.png')
+        inside_bottom_right = pygame.image.load('Graphics/InsideBottomRight.png')
+        inside_bottom_left = pygame.image.load('Graphics/InsideBottomLeft.png')
+        inside_top_right = pygame.image.load('Graphics/InsideTopRight.png')
+        inside_top_left = pygame.image.load('Graphics/InsideTopLeft.png')
+        outside_top_left = pygame.image.load('Graphics/CornerLeft.png')
+        outside_top_right = pygame.image.load('Graphics/CornerRight.png')
+        outside_bottom_left = pygame.image.load('Graphics/BottomLeft.png')
+        outside_bottom_right = pygame.image.load('Graphics/BottomRight.png')
+
+        # sets the numbers for each tile to be added to the list
+        row_count = 0
+        for row in data:
+            col_count = 0
+            for tile in row:
+                if tile == 1:
+                    image = main_floor
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
+                if tile == 2:
+                    image = left_side
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
+                if tile == 3:
+                    image = right_side
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
+                if tile == 4:
+                    image = main_roof
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
+                if tile == 5:
+                    image = inside_bottom_right
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
+                if tile == 6:
+                    image = inside_bottom_left
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
+                if tile == 7:
+                    image = inside_top_right
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
+                if tile == 8:
+                    image = inside_top_left
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
+                if tile == 9:
+                    image = outside_top_left
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
+                if tile == 10:
+                    image = outside_top_right
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
+                if tile == 11:
+                    image = outside_bottom_left
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
+                if tile == 12:
+                    image = outside_bottom_right
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
+
+                if tile == 13:
+                    spikes = Spike(col_count * tile_size, row_count * tile_size)
+                    spike_group.add(spikes)
+
+                if tile == 14:
+                    image = right_side
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
+
+                col_count += 1
+            row_count += 1
+
+    def draw(self):
+        for tile in self.tile_list:
+            tile[1][0] -= player.speed
+            screen.blit(tile[0], tile[1])
+
+
+spike_group = pygame.sprite.Group()
+
+level1 = World(world_data1)
+level2 = World(world_data2)
 
 
 run = True
@@ -489,6 +639,8 @@ while run:
         bullet_group.update()
         bullet_group.draw(screen)
 
+        spike_group.update()
+
     # start menu
     if start_menu is True:
         draw_start_menu()
@@ -522,5 +674,3 @@ while run:
     clock.tick(60)
 
 pygame.quit()
-
-
