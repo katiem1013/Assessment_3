@@ -11,6 +11,10 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 tile_size = 64
 
 
+# to avoid having to write the whole thing out each time a key is pressed
+key = pygame.key.get_pressed()
+
+
 # spikes that will deal damage to the player when stood on
 class Spike(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -25,8 +29,8 @@ class Spike(pygame.sprite.Sprite):
 # sets up the tile map to make the world
 class World:
     def __init__(self, data):
-        self.tile_list = []
 
+        self.tile_list = []
         # tile map images
         main_floor = pygame.image.load('Graphics/FloorMain.png')
         right_side = pygame.image.load('Graphics/SideLeft.png')
@@ -140,6 +144,7 @@ class World:
 
     def draw(self):
         for tile in self.tile_list:
+            tile[1][0] += player.speed
             screen.blit(tile[0], tile[1])
 
 
@@ -189,6 +194,3 @@ spike_group = pygame.sprite.Group()
 
 level1 = World(world_data1)
 level2 = World(world_data2)
-
-
-

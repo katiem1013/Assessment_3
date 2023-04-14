@@ -1,10 +1,10 @@
 import pygame
 import time
-
-import Levels
 from Levels import *
 
 pygame.init()
+
+
 
 # what level is being selected
 start_menu = True
@@ -28,6 +28,13 @@ pygame.display.set_caption('Assessment 3')
 clock = pygame.time.Clock()  # clock to set the frame rate
 font = pygame.font.Font(None, 40)
 
+# parallax variables
+background_scroll = 0
+
+# world scrolling
+scroll_limit = 200
+screen_scroll = 0
+
 # screen flipping variables
 gravity = 1  # 1 has the player at the bottom, 2 has the player at the top
 
@@ -39,9 +46,6 @@ key = pygame.key.get_pressed()
 
 # gravity change cool down time
 cool_down_GC = 300
-
-# parallax variables
-scroll = 0
 
 # background images
 background_images = []
@@ -55,7 +59,7 @@ def parallax_background():
     for repeat in range(5):  # makes sure the background will repeat when it ends
         scroll_speed = 1
         for image in background_images:
-            screen.blit(image, ((repeat * background_width) - scroll * scroll_speed, 0))
+            screen.blit(image, ((repeat * background_width) - background_scroll * scroll_speed, 0))
             if player.speed > 0:
                 scroll_speed += 0.2
 
@@ -104,7 +108,7 @@ class Player(pygame.sprite.Sprite):
         global bullet_speed
         global key
         global player_move
-        global scroll
+        global background_scroll
 
         # setting speed and cool down rate
         speed = 0
@@ -118,13 +122,13 @@ class Player(pygame.sprite.Sprite):
         self.rect.y += self.y_velocity
 
         # movement inputs
-        if key[pygame.K_a] and self.rect.left > 0 and player_move is True and scroll > 0:
+        if key[pygame.K_a] and self.rect.left > 0 and player_move is True and background_scroll > 0:
             speed -= 8
-            scroll -= 3
+            background_scroll -= 3
             self.direction = True
-        if key[pygame.K_d] and self.rect.right < screen_width and player_move is True and scroll < 3000:
+        if key[pygame.K_d] and self.rect.right < screen_width and player_move is True and background_scroll < 3000:
             speed += 8
-            scroll += 3
+            background_scroll += 3
             self.direction = False
 
         time_now = pygame.time.get_ticks()
@@ -184,7 +188,6 @@ class Player(pygame.sprite.Sprite):
                         self.y_velocity = tile[1].top - self.rect.bottom
                         self.y_velocity = 0
 
-
         # check for collision with lava
         if pygame.sprite.spritecollide(self, spike_group, False) and player_move is True:
             self.get_damage(10)
@@ -192,6 +195,7 @@ class Player(pygame.sprite.Sprite):
             self.y_velocity = 0
 
         self.rect.x += speed
+
 
         # idle animation when the player is not moving
         if self.y_velocity == 0 and speed == 0 and player_move is True:
@@ -225,18 +229,16 @@ class Player(pygame.sprite.Sprite):
         if self.gravity_position is True:
             player.image = pygame.transform.flip(player.image, False, True)
 
+        # checks if the players health goes over the max amount of damage
+        if self.current_health >= self.max_health:
+            self.current_health = self.current_health
+
     def get_damage(self, amount):
 
         if self.current_health > 0 and player_move is True:
             self.current_health -= amount
         if self.current_health <= 0 and player_move is True:
             self.current_health = 0
-
-    def get_health(self, amount):
-        if self.current_health < self.max_health:
-            self.current_health += amount
-        if self.current_health >= self.max_health:
-            self.current_health = self.current_health
 
     def health_bar(self):
         pygame.draw.rect(screen, (255, 87, 51), (10, 10, self.current_health / self.health_ratio, 35))
@@ -336,9 +338,9 @@ def draw_pause():
     text = font.render('Exit', True, 'black')
     screen.blit(text, (930, 522))
 
-    for event in pygame.event.get():
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:
+    for pause in pygame.event.get():
+        if pause.type == pygame.MOUSEBUTTONDOWN:
+            if pause.button == 1:
 
                 if resume_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
                     game_paused = False
@@ -380,9 +382,9 @@ def draw_start_menu():
     text = font.render('Exit', True, 'black')
     screen.blit(text, (930, 472))
 
-    for event in pygame.event.get():
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:
+    for start in pygame.event.get():
+        if start.type == pygame.MOUSEBUTTONDOWN:
+            if start.button == 1:
 
                 if start_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
                     pygame.time.delay(500)
@@ -425,9 +427,9 @@ def draw_level_select():
     text = font.render('Level 2', True, 'black')
     screen.blit(text, (910, 422))
 
-    for event in pygame.event.get():
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:
+    for select in pygame.event.get():
+        if select.type == pygame.MOUSEBUTTONDOWN:
+            if select.button == 1:
 
                 if level1_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
                     level_1 = True
@@ -435,7 +437,7 @@ def draw_level_select():
                     playing_game = True
                     player_move = True
                     start_menu = False
-                    player.rect.x = 100
+                    player.rect.x = 250
                     player.rect.y = screen_height - 200
                     player.current_health = player.max_health
 
@@ -445,7 +447,7 @@ def draw_level_select():
                     playing_game = True
                     player_move = True
                     start_menu = False
-                    player.rect.x = 100
+                    player.rect.x = 250
                     player.rect.y = screen_height - 200
                     player.current_health = player.max_health
 
@@ -513,8 +515,12 @@ while run:
         if event.type == pygame.QUIT:
             run = False
 
+    tile_speed = player.speed
+
     pygame.display.flip()
     pygame.display.update()
     clock.tick(60)
 
 pygame.quit()
+
+
