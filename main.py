@@ -1,4 +1,7 @@
 import time
+
+import pygame
+
 from Levels import *
 
 pygame.init()
@@ -54,8 +57,8 @@ def parallax_background():
         scroll_speed = 1
         for image in background_images:
             screen.blit(image, ((repeat * background_width) - background_scroll * scroll_speed, 0))
-            if player.speed > 0:
-                scroll_speed += 0.2
+            if player.speed < 0:
+                scroll_speed += 0.1
 
 
 # adds the idle images to a list so it can cycle through them
@@ -117,7 +120,7 @@ class Player(pygame.sprite.Sprite):
         # movement inputs
         if key[pygame.K_a] and self.rect.left > 0 and player_move is True and background_scroll > 0:
             speed -= 8
-            background_scroll -= 1
+            background_scroll += -1
             self.direction = True
         if key[pygame.K_d] and self.rect.right < screen_width and player_move is True and background_scroll < 3000:
             speed += 8
@@ -468,11 +471,13 @@ class Spike(pygame.sprite.Sprite):
     def update(self):
         self.rect.x -= player.speed
 
+test = False
 
 # sets up the tile map to make the world
 class World:
     def __init__(self, data):
 
+        global test
         self.tile_list = []
 
         # tile map images
@@ -488,6 +493,7 @@ class World:
         outside_top_right = pygame.image.load('Graphics/CornerRight.png')
         outside_bottom_left = pygame.image.load('Graphics/BottomLeft.png')
         outside_bottom_right = pygame.image.load('Graphics/BottomRight.png')
+        plain = pygame.image.load('Graphics/Middle.png')
 
         # sets the numbers for each tile to be added to the list
         row_count = 0
@@ -584,7 +590,7 @@ class World:
                     spike_group.add(spikes)
 
                 if tile == 14:
-                    image = right_side
+                    image = plain
                     image_rect = image.get_rect()
                     image_rect.x = col_count * tile_size
                     image_rect.y = row_count * tile_size
@@ -659,6 +665,9 @@ while run:
 
     if player.current_health <= 0:
         run = False
+
+    if test:
+        print(test)
 
     # allows key to be used instead of typing out the whole thing
     key = pygame.key.get_pressed()
