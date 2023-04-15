@@ -458,6 +458,33 @@ def draw_level_select():
                     level_select = False
 
 
+left_edge = False
+right_edge = True
+
+
+class EndOfLevel(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        spikes = pygame.image.load('Graphics/SideLeft.png')
+        self.image = pygame.transform.scale(spikes, (tile_size, tile_size))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+    def update(self):
+        global left_edge
+        global right_edge
+        if self.rect.x == screen_width - 64:
+            left_edge = True
+        else:
+            left_edge = False
+
+        if left_edge is False:
+            self.rect.x -= player.speed
+        if left_edge is True:
+            self.rect.x -= 0
+
+
 # spikes that will deal damage to the player when stood on
 class Spike(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -469,15 +496,18 @@ class Spike(pygame.sprite.Sprite):
         self.rect.y = y
 
     def update(self):
-        self.rect.x -= player.speed
 
-test = False
+        if player.speed == 0:
+            self.rect.x -= 0
+        if player.speed != 0 and left_edge is False:
+            self.rect.x -= player.speed
+
 
 # sets up the tile map to make the world
 class World:
     def __init__(self, data):
 
-        global test
+        global left_edge
         self.tile_list = []
 
         # tile map images
@@ -590,23 +620,25 @@ class World:
                     spike_group.add(spikes)
 
                 if tile == 14:
-                    image = plain
-                    image_rect = image.get_rect()
-                    image_rect.x = col_count * tile_size
-                    image_rect.y = row_count * tile_size
-                    tile = (image, image_rect)
-                    self.tile_list.append(tile)
+                    end = EndOfLevel(col_count * tile_size, row_count * tile_size)
+                    end_group.add(end)
 
                 col_count += 1
             row_count += 1
 
     def draw(self):
+        global left_edge
         for tile in self.tile_list:
-            tile[1][0] -= player.speed
+            if left_edge is False:
+                tile[1][0] -= player.speed
+            if left_edge is True:
+                tile[1][0] == 0
+
             screen.blit(tile[0], tile[1])
 
 
 spike_group = pygame.sprite.Group()
+end_group = pygame.sprite.Group()
 
 level1 = World(world_data1)
 level2 = World(world_data2)
@@ -623,6 +655,7 @@ while run:
         level1.draw()
         # draws the spikes onto the screen
         spike_group.draw(screen)
+        end_group.draw(screen)
         current_level = 0
 
     if level_2 is True:
@@ -630,6 +663,7 @@ while run:
         level2.draw()
         # draws the spikes onto the screen
         spike_group.draw(screen)
+        end_group.draw(screen)
         current_level = 1
 
     if playing_game is True:
@@ -646,6 +680,7 @@ while run:
         bullet_group.draw(screen)
 
         spike_group.update()
+        end_group.update()
 
     # start menu
     if start_menu is True:
@@ -666,16 +701,12 @@ while run:
     if player.current_health <= 0:
         run = False
 
-    if test:
-        print(test)
-
     # allows key to be used instead of typing out the whole thing
     key = pygame.key.get_pressed()
     # quits the game when run is false
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-
     tile_speed = player.speed
 
     pygame.display.flip()
