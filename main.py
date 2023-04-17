@@ -45,20 +45,20 @@ cool_down_GC = 300
 
 # background images
 background_images = []
-for i in range(5):
-    background = pygame.image.load(f'Graphics/Background{i}.png').convert_alpha()
-    background_images.append(background)
+# for i in range(5):
+    # background = pygame.image.load(f'Graphics/Background{i}.png').convert_alpha()
+    # background_images.append(background)
 
-background_width = background_images[0].get_width()
+# background_width = background_images[0].get_width()
 
 
-def parallax_background():
-    for repeat in range(5):  # makes sure the background will repeat when it ends
-        scroll_speed = 1
-        for image in background_images:
-            screen.blit(image, ((repeat * background_width) - background_scroll * scroll_speed, 0))
-            if player.speed < 0:
-                scroll_speed += 0.1
+# def parallax_background():
+    # for repeat in range(5):  # makes sure the background will repeat when it ends
+        # scroll_speed = 1
+        # for image in background_images:
+            # screen.blit(image, ((repeat * background_width) - background_scroll * scroll_speed, 0))
+            # if player.speed < 0:
+                # scroll_speed += 0.1
 
 
 # adds the idle images to a list so it can cycle through them
@@ -119,11 +119,11 @@ class Player(pygame.sprite.Sprite):
 
         # movement inputs
         if key[pygame.K_a] and self.rect.left > 0 and player_move is True and background_scroll > 0:
-            speed -= 8
+            speed -= 4
             background_scroll += -1
             self.direction = True
         if key[pygame.K_d] and self.rect.right < screen_width and player_move is True and background_scroll < 3000:
-            speed += 8
+            speed += 4
             background_scroll += 1
             self.direction = False
 
@@ -320,25 +320,19 @@ def draw_pause():
     global level_2
     global player_move
 
-    pygame.draw.rect(screen, (24, 20, 37), [810, 280, 300, 310], 0, 15)
+    pygame.draw.rect(screen, (24, 20, 37), [810, 325, 300, 220], 0, 15)
 
     # resume game button
-    resume_button = pygame.draw.rect(screen, (181, 80, 136), [830, 300, 260, 70], 0, 15)
-    pygame.draw.rect(screen, (181, 80, 136), [830, 300, 260, 70], 5, 15)
+    resume_button = pygame.draw.rect(screen, (181, 80, 136), [830, 350, 260, 70], 0, 15)
+    pygame.draw.rect(screen, (181, 80, 136), [830, 350, 260, 70], 5, 15)
     text = font.render('Resume', True, 'black')
-    screen.blit(text, (900, 322))
-
-    # main menu button
-    menu_button = pygame.draw.rect(screen, (181, 80, 136), [830, 400, 260, 70], 0, 15)
-    pygame.draw.rect(screen, (181, 80, 136), [830, 400, 260, 70], 5, 15)
-    text = font.render('Main Menu', True, 'black')
-    screen.blit(text, (885, 422))
+    screen.blit(text, (900, 372))
 
     # exit game button
-    exit_button = pygame.draw.rect(screen, (181, 80, 136), [830, 500, 260, 70], 0, 15)
-    pygame.draw.rect(screen, (181, 80, 136), [830, 500, 260, 70], 5, 15)
+    exit_button = pygame.draw.rect(screen, (181, 80, 136), [830, 450, 260, 70], 0, 15)
+    pygame.draw.rect(screen, (181, 80, 136), [830, 450, 260, 70], 5, 15)
     text = font.render('Exit', True, 'black')
-    screen.blit(text, (930, 522))
+    screen.blit(text, (930, 472))
 
     for pause in pygame.event.get():
         if pause.type == pygame.MOUSEBUTTONDOWN:
@@ -348,13 +342,6 @@ def draw_pause():
                     game_paused = False
                     playing_game = True
                     player_move = True
-
-                if menu_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
-                    pygame.time.delay(500)
-                    start_menu = True
-                    playing_game = False
-                    level_1 = False
-                    level_2 = False
 
                 if exit_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
                     run = False
@@ -647,8 +634,9 @@ level2 = World(world_data2)
 run = True
 while run:
 
+    screen.fill((100, 100, 100))  # sets the screen colour
     # makes the background appear on the screen
-    parallax_background()
+    # parallax_background()
 
     if level_1 is True:
         # draws the level onto the screen
