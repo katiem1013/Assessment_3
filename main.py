@@ -1,7 +1,4 @@
 import time
-
-import pygame
-
 from Levels import *
 
 pygame.init()
@@ -45,20 +42,18 @@ cool_down_GC = 300
 
 # background images
 background_images = []
-# for i in range(5):
-    # background = pygame.image.load(f'Graphics/Background{i}.png').convert_alpha()
-    # background_images.append(background)
+for i in range(5):
+    background = pygame.image.load(f'Graphics/Background{i}.png').convert_alpha()
+    background_images.append(background)
 
-# background_width = background_images[0].get_width()
+background_width = background_images[0].get_width()
 
 
-# def parallax_background():
-    # for repeat in range(5):  # makes sure the background will repeat when it ends
-        # scroll_speed = 1
-        # for image in background_images:
-            # screen.blit(image, ((repeat * background_width) - background_scroll * scroll_speed, 0))
-            # if player.speed < 0:
-                # scroll_speed += 0.1
+def parallax_background():
+    for repeat in range(5):  # makes sure the background will repeat when it ends
+        scroll_speed = 1
+        for image in background_images:
+            screen.blit(image, ((repeat * background_width) - background_scroll * scroll_speed, 0))
 
 
 # adds the idle images to a list so it can cycle through them
@@ -80,14 +75,14 @@ for x in range(3):
 class Player(pygame.sprite.Sprite):
     global gravity
 
-    def __init__(self, x, y):
+    def __init__(self, player_x, player_y):
         super().__init__()
         pygame.sprite.Sprite.__init__(self)
         self.image = idle_images[0]
         self.y_velocity = 5
         self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+        self.rect.x = player_x
+        self.rect.y = player_y
         self.current_health = 1000
         self.max_health = 1000
         self.health_ratio = self.max_health / 400
@@ -228,6 +223,9 @@ class Player(pygame.sprite.Sprite):
         if self.current_health >= self.max_health:
             self.current_health = self.current_health
 
+        if self.rect.bottom >= screen_height or self.rect.top <= 0:
+            self.current_health -= 50
+
         self.speed = speed
 
         # update scroll based on player position
@@ -255,11 +253,11 @@ player_group.add(player)
 
 
 class Bullets(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, bullet_x, bullet_y):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load('Graphics/Bullet.png').convert()
         self.rect = self.image.get_rect()
-        self.rect.center = [x, y]
+        self.rect.center = [bullet_x, bullet_y]
 
     def update(self):
         self.rect.y += bullet_speed
@@ -450,13 +448,13 @@ right_edge = True
 
 
 class EndOfLevel(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, end_x, end_y):
         pygame.sprite.Sprite.__init__(self)
         spikes = pygame.image.load('Graphics/SideLeft.png')
         self.image = pygame.transform.scale(spikes, (tile_size, tile_size))
         self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+        self.rect.x = end_x
+        self.rect.y = end_y
 
     def update(self):
         global left_edge
@@ -474,13 +472,13 @@ class EndOfLevel(pygame.sprite.Sprite):
 
 # spikes that will deal damage to the player when stood on
 class Spike(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, spike_x, spike_y):
         pygame.sprite.Sprite.__init__(self)
         spikes = pygame.image.load('Graphics/Spike.png')
         self.image = pygame.transform.scale(spikes, (tile_size, tile_size))
         self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+        self.rect.x = spike_x
+        self.rect.y = spike_y
 
     def update(self):
 
@@ -510,7 +508,6 @@ class World:
         outside_top_right = pygame.image.load('Graphics/CornerRight.png')
         outside_bottom_left = pygame.image.load('Graphics/BottomLeft.png')
         outside_bottom_right = pygame.image.load('Graphics/BottomRight.png')
-        plain = pygame.image.load('Graphics/Middle.png')
 
         # sets the numbers for each tile to be added to the list
         row_count = 0
@@ -619,7 +616,7 @@ class World:
             if left_edge is False:
                 tile[1][0] -= player.speed
             if left_edge is True:
-                tile[1][0] == 0
+                tile[1][0] -= 0
 
             screen.blit(tile[0], tile[1])
 
@@ -634,9 +631,8 @@ level2 = World(world_data2)
 run = True
 while run:
 
-    screen.fill((100, 100, 100))  # sets the screen colour
     # makes the background appear on the screen
-    # parallax_background()
+    parallax_background()
 
     if level_1 is True:
         # draws the level onto the screen
