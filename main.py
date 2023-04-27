@@ -1,5 +1,6 @@
 import time
 from Levels import *
+from Animations import *
 
 pygame.init()
 
@@ -11,42 +12,27 @@ level_2 = False
 game_paused = False
 playing_game = False
 player_move = False
-
-# 0 is level 1, 1 is level 2
-current_level = 0
+current_level = 0 # 0 is level 1, 1 is level 2
 
 # slows down the animations
 start_frame = time.time()
 noi = 6
 frames_per_second = 10
 
-
+# screen variables
 pygame.display.set_caption('Assessment 3')
 clock = pygame.time.Clock()  # clock to set the frame rate
 font = pygame.font.Font(None, 40)
-
-# controls the parallax background
-background_scroll = 0
+background_scroll = 0  # controls the parallax background
+left_edge = False  # determines when the end of the levels have been reached
 
 # screen flipping variables
 gravity = 1  # 1 has the player at the bottom, 2 has the player at the top
+cool_down_GC = 300  # gravity change cool down time
 
 # player variables
 bullet_speed = -5
-
-# to avoid having to write the whole thing out each time a key is pressed
-key = pygame.key.get_pressed()
-
-# gravity change cool down time
-cool_down_GC = 300
-
-# background images
-background_images = []
-for i in range(5):
-    background = pygame.image.load(f'Graphics/Background{i}.png').convert_alpha()
-    background_images.append(background)
-
-background_width = background_images[0].get_width()
+key = pygame.key.get_pressed()  # to avoid having to write the whole thing out each time a key is pressed
 
 
 def parallax_background():
@@ -54,22 +40,6 @@ def parallax_background():
         scroll_speed = 1
         for image in background_images:
             screen.blit(image, ((repeat * background_width) - background_scroll * scroll_speed, 0))
-
-
-# adds the idle images to a list so it can cycle through them
-idle_images = []
-for x in range(6):
-    idle_images.append(pygame.image.load('Graphics/Player/Idle' + str(x) + '.png'))
-
-# adds the running images to a list so it can cycle through them
-run_images = []
-for x in range(6):
-    run_images.append(pygame.image.load('Graphics/Player/Run' + str(x) + '.png'))
-
-# adds the falling images to a list so it can cycle through them
-falling_images = []
-for x in range(3):
-    falling_images.append(pygame.image.load('Graphics/Player/Falling' + str(x) + '.png'))
 
 
 class Player(pygame.sprite.Sprite):
@@ -179,7 +149,7 @@ class Player(pygame.sprite.Sprite):
                         self.y_velocity = tile[1].top - self.rect.bottom
                         self.y_velocity = 0
 
-        # check for collision with lava
+        # check for collision with spikes
         if pygame.sprite.spritecollide(self, spike_group, False) and player_move is True:
             self.get_damage(10)
             self.y_velocity = tile[1].top - self.rect.bottom
@@ -245,13 +215,6 @@ class Player(pygame.sprite.Sprite):
         pygame.draw.rect(screen, (170, 40, 10), (10, 10, 400, 35), 4)
 
 
-# puts the player in a group
-player_group = pygame.sprite.Group()
-
-player = Player(int(screen_width / 4), screen_height - 500)
-player_group.add(player)
-
-
 class Bullets(pygame.sprite.Sprite):
     def __init__(self, bullet_x, bullet_y):
         pygame.sprite.Sprite.__init__(self)
@@ -265,6 +228,7 @@ class Bullets(pygame.sprite.Sprite):
             self.kill()
         if self.rect.top < 0:
             self.kill()
+
 
 
 def gravity_change():
@@ -299,9 +263,6 @@ def gravity_change():
         player.image = pygame.transform.flip(player.image, False, True)
         bullet_group.empty()
 
-
-# puts the bullets in a group
-bullet_group = pygame.sprite.Group()
 
 # sets the cool down to 0
 cool_down_GC = 0
@@ -443,22 +404,123 @@ def draw_level_select():
                     level_select = False
 
 
-left_edge = False
-right_edge = True
+# puts the player in a group
+player_group = pygame.sprite.Group()
+player = Player(int(screen_width / 4), screen_height - 500)
+player_group.add(player)
+
+# puts the bullets in a group
+bullet_group = pygame.sprite.Group()
+
+# puts the tile map objects into groups
+spike_group = pygame.sprite.Group()
+end_group = pygame.sprite.Group()
+ground_enemy_group = pygame.sprite.Group()
 
 
+class GroundEnemies(pygame.sprite.Sprite):
+    def __init__(self, player_x, player_y):
+        super().__init__()
+        pygame.sprite.Sprite.__init__(self)
+        self.image = enemy_idle_images[0]
+        self.rect = self.image.get_rect()
+        self.y_velocity = 5
+        self.rect.x = player_x
+        self.rect.y = player_y
+        self.current_health = 50
+        self.max_health = 50
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
+        self.value = 0
+        self.move_counter = 0
+        self.move_direction = 1
+
+    def update(self):
+
+        self.rect.x += self.move_direction
+        self.move_counter -= 1
+        if abs(self.move_counter) > 150:
+            self.move_direction *= -1
+            self.move_counter *= self.move_direction
+
+        if player.speed == 0:
+            self.rect.x -= 0
+        if player.speed != 0 and left_edge is False:
+            self.rect.x -= player.speed
+
+        self.rect.y += self.y_velocity
+
+        if player_move is True:
+            self.y_velocity += 1
+            # if the velocity goes beyond 5 it will set it back to 5
+            if self.y_velocity > 5:
+                self.y_velocity = 5
+
+        level = [level1.tile_list, level2.tile_list]
+        # checking for collision
+        for tile in level[current_level]:
+            # check for collision in x direction
+            if tile[1].colliderect(self.rect.x, self.rect.y, self.width, self.height):
+                 self.move_direction *= -1
+
+            # check for collision in y direction
+            if tile[1].colliderect(self.rect.x, self.rect.y + self.y_velocity, self.width, self.height):
+                if self.y_velocity == 5:
+                    self.y_velocity = tile[1].bottom - self.rect.top
+                    self.y_velocity = 0
+                # check if above the ground
+                if self.y_velocity >= 0:
+                    self.y_velocity = 0
+
+                # checks for collision in y direction when the gravity has been flipped
+                if tile[1].colliderect(self.rect.x, self.rect.y + self.y_velocity, self.width, self.height):
+                    if self.y_velocity == -5:
+                        self.y_velocity = 0
+                    # check if above the ground
+                    if self.y_velocity <= 0:
+                        self.y_velocity = tile[1].top - self.rect.bottom
+                        self.y_velocity = 0
+
+        # idle animation when the enemy is not moving
+        if self.y_velocity == 0 and self.move_counter == 0:
+            self.value += 1
+            if self.value >= len(enemy_idle_images):
+                self.value = 0
+            self.image = enemy_idle_images[self.value]
+            self.value = int((time.time() - start_frame) * frames_per_second % noi)
+
+            # running animation when the enemy is moving
+        if self.y_velocity == 0 and self.move_counter != 0:
+            self.value += 1
+            if self.value >= len(enemy_run_images):
+                self.value = 0
+            self.image = enemy_run_images[self.value]
+            self.value = int((time.time() - start_frame) * frames_per_second % noi)
+
+        # changes the direction of the player sprite based on the way they are walking
+        if self.move_direction == -1:
+            self.image = pygame.transform.flip(self.image, True, False)
+
+        if pygame.sprite.spritecollide(self, bullet_group, True):
+            self.current_health -= 10
+            bullet_group.remove()
+
+        if self.current_health <= 0:
+            self.kill()
+
+
+# stops the screen scrolling once the player has reached the end of the level
 class EndOfLevel(pygame.sprite.Sprite):
     def __init__(self, end_x, end_y):
         pygame.sprite.Sprite.__init__(self)
-        spikes = pygame.image.load('Graphics/SideLeft.png')
-        self.image = pygame.transform.scale(spikes, (tile_size, tile_size))
+        end = pygame.image.load('Graphics/SideLeft.png')
+        self.image = pygame.transform.scale(end, (tile_size, tile_size))
         self.rect = self.image.get_rect()
         self.rect.x = end_x
         self.rect.y = end_y
 
     def update(self):
         global left_edge
-        global right_edge
         if self.rect.x == screen_width - 64:
             left_edge = True
         else:
@@ -607,6 +669,10 @@ class World:
                     end = EndOfLevel(col_count * tile_size, row_count * tile_size)
                     end_group.add(end)
 
+                if tile == 20:
+                    ground_enemies = GroundEnemies(col_count * tile_size, row_count * tile_size)
+                    ground_enemy_group.add(ground_enemies)
+
                 col_count += 1
             row_count += 1
 
@@ -621,12 +687,9 @@ class World:
             screen.blit(tile[0], tile[1])
 
 
-spike_group = pygame.sprite.Group()
-end_group = pygame.sprite.Group()
-
+# defines the separate levels for easy referencing
 level1 = World(world_data1)
 level2 = World(world_data2)
-
 
 run = True
 while run:
@@ -640,6 +703,9 @@ while run:
         # draws the spikes onto the screen
         spike_group.draw(screen)
         end_group.draw(screen)
+        ground_enemy_group.draw(screen)
+
+
         current_level = 0
 
     if level_2 is True:
@@ -665,6 +731,7 @@ while run:
 
         spike_group.update()
         end_group.update()
+        ground_enemy_group.update()
 
     # start menu
     if start_menu is True:
