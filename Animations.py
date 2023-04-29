@@ -24,6 +24,22 @@ falling_images = []
 for x in range(3):
     falling_images.append(pygame.image.load('Graphics/Player/Falling' + str(x) + '.png'))
 
+# UPSIDE DOWN PLAYER ANIMATIONS
+# adds the upside down idle images to a list so it can cycle through them
+USD_idle_images = []
+for x in range(6):
+    USD_idle_images.append(pygame.image.load('Graphics/Player/USD_Idle' + str(x) + '.png'))    
+    
+# adds the upside down running images to a list so it can cycle through them
+USD_run_images = []
+for x in range(6):
+    USD_run_images.append(pygame.image.load('Graphics/Player/USD_Run' + str(x) + '.png'))
+
+# adds the upside down falling images to a list so it can cycle through them
+USD_falling_images = []
+for x in range(3):
+    USD_falling_images.append(pygame.image.load('Graphics/Player/USD_Falling' + str(x) + '.png'))
+    
 # ENEMY ANIMATIONS
 # adds the idle images to a list so it can cycle through them
 enemy_idle_images = []
