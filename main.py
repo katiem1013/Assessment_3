@@ -676,11 +676,14 @@ class World:
                 col_count += 1
             row_count += 1
 
+    # draws the tiles onto the screen
     def draw(self):
-        global left_edge
+        global left_edge  # calls the global value of left_edge to this function
         for tile in self.tile_list:
+            # lets the tiles scroll to allow the level to go beyond the screen
             if left_edge is False:
                 tile[1][0] -= player.speed
+            # stops the tiles from scrolling once the player reaches the end
             if left_edge is True:
                 tile[1][0] -= 0
 
@@ -691,7 +694,9 @@ class World:
 level1 = World(world_data1)
 level2 = World(world_data2)
 
+# sets run to True
 run = True
+# runs everything in the game
 while run:
 
     # makes the background appear on the screen
@@ -700,22 +705,27 @@ while run:
     if level_1 is True:
         # draws the level onto the screen
         level1.draw()
-        # draws the spikes onto the screen
+        
+        # draws the spikes, end of level and the enemies onto the screen
         spike_group.draw(screen)
         end_group.draw(screen)
         ground_enemy_group.draw(screen)
 
-
+        # makes current level 0
         current_level = 0
 
     if level_2 is True:
         # draws the level onto the screen
         level2.draw()
-        # draws the spikes onto the screen
+        
+        # draws the spikes and the end of the level onto the screen
         spike_group.draw(screen)
         end_group.draw(screen)
+        
+        # makes current level 1 
         current_level = 1
 
+    # when each level begins playing these things will happen:
     if playing_game is True:
 
         # allows the players to run within the game
@@ -729,26 +739,30 @@ while run:
         bullet_group.update()
         bullet_group.draw(screen)
 
+        # adds the spikes, end of the level and the enemies run within the game 
         spike_group.update()
         end_group.update()
         ground_enemy_group.update()
 
-    # start menu
+    # draws the start menu to the screen
     if start_menu is True:
         draw_start_menu()
 
+    # draws the level select menu to the screen if the start_menu is False
     if level_select and start_menu is False:
         draw_level_select()
 
-    # pause menu
+    # draws the pause menu to the screen when the game is paused
     if game_paused is True and start_menu is False and level_select is False:
         draw_pause()
 
+    # stops the player from moving
     if key[pygame.K_ESCAPE]:
         game_paused = True
         player_move = False
         player.y_velocity = 0
 
+    # ends the game if the player runs out of health by setting run to False
     if player.current_health <= 0:
         run = False
 
@@ -758,8 +772,12 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-    tile_speed = player.speed
+            
+    tile_speed = player.speed  # makes the levels scroll
 
+    pygame.mixer.music.load('Sound/BG_Music.mp3')  # plays background music
+    pygame.mixer.music.play(-1)  # -1 loops the music forever 
+    
     pygame.display.flip()
     pygame.display.update()
     clock.tick(60)
