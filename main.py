@@ -35,13 +35,15 @@ bullet_speed = -5
 key = pygame.key.get_pressed()  # to avoid having to write the whole thing out each time a key is pressed
 
 
+# causes the background to move with the player
 def parallax_background():
     for repeat in range(5):  # makes sure the background will repeat when it ends
         scroll_speed = 1
-        for image in background_images:
+        for image in background_images:  # will scroll for every image that the background is made up of
             screen.blit(image, ((repeat * background_width) - background_scroll * scroll_speed, 0))
 
 
+# the player class
 class Player(pygame.sprite.Sprite):
     global gravity
 
@@ -55,14 +57,14 @@ class Player(pygame.sprite.Sprite):
         self.rect.y = player_y
         self.current_health = 1000
         self.max_health = 1000
-        self.health_ratio = self.max_health / 400
-        self.last_shot = pygame.time.get_ticks()
+        self.health_ratio = self.max_health / 400  # sets up the health bar
+        self.last_shot = pygame.time.get_ticks()  # keeps track of when the player last shot so they can't shoot constantly
         self.width = self.image.get_width()
         self.height = self.image.get_height()
-        self.value = 0
+        self.value = 0  # animation frames
         self.direction = False  # True is left, False is Right
         self.gravity_position = False  # True is the roof, False is the floor
-        self.speed = 0
+        self.speed = 0  # the players speed
 
     def update(self):
 
@@ -82,31 +84,32 @@ class Player(pygame.sprite.Sprite):
         # setting the y position of the player to be the y velocity
         self.rect.y += self.y_velocity
 
-        # movement inputs
+        # movement inputs for when the player is able to move
         if key[pygame.K_a] and self.rect.left > 0 and player_move is True and background_scroll > 0:
-            speed -= 4
-            background_scroll += -1
-            self.direction = True
+            speed -= 4  # changes the players speed 
+            background_scroll += -1  # changes the background when the player moves
+            self.direction = True  # sets the direction the player is going so that the animation can change
         if key[pygame.K_d] and self.rect.right < screen_width and player_move is True and background_scroll < 3000:
-            speed += 4
-            background_scroll += 1
-            self.direction = False
+            speed += 4  # changes the players speed
+            background_scroll += 1  # changes the background when the player moves
+            self.direction = False  # sets the direction the player is going so that the animation can change
 
+        # sets time_now to be the current amount of time within the game
         time_now = pygame.time.get_ticks()
 
         # changes the way the bullets shoot when the gravity is changed
         if gravity == 1 and key[pygame.K_SPACE] and time_now - self.last_shot > cool_down and self.y_velocity == 0\
                 and player_move is True:
             bullet = Bullets(self.rect.centerx + 10, self.rect.top)
-            bullet_group.add(bullet)
-            self.last_shot = time_now
+            bullet_group.add(bullet)  # spawns the bullets, adding them to the bullet group so they can deal damage
+            self.last_shot = time_now  # sets last_shot to time_now in order to limit the amount of shots the player has
 
         # changes the way the bullets shoot when the gravity is changed
         if gravity == 2 and key[pygame.K_SPACE] and time_now - self.last_shot > cool_down and self.y_velocity == 0\
                 and player_move is True:
             bullet = Bullets(self.rect.centerx + 10, self.rect.bottom)
-            bullet_group.add(bullet)
-            self.last_shot = time_now
+            bullet_group.add(bullet)  # spawns the bullets, adding them to the bullet group so they can deal damage
+            self.last_shot = time_now  # sets last_shot to time_now in order to limit the amount of shots the player has
 
         # changes the way the player is falling when the gravity is changed
         if gravity == 1 and player_move is True:
@@ -122,6 +125,7 @@ class Player(pygame.sprite.Sprite):
             if self.y_velocity > -5:
                 self.y_velocity = -5
 
+        # adds all tilemaps to the level variable
         level = [level1.tile_list, level2.tile_list]
 
         # checking for collision
@@ -183,11 +187,35 @@ class Player(pygame.sprite.Sprite):
             self.image = falling_images[self.value]
             self.value = int((time.time() - start_frame) * frames_per_second % noi)
 
+        # upside down idle animation when the player is not moving
+        if self.y_velocity == 0 and speed == 0 and player_move is True and self.gravity_position is True:
+            self.value += 1
+            if self.value >= len(USD_idle_images):
+                self.value = 0
+            self.image = USD_idle_images[self.value]
+            self.value = int((time.time() - start_frame) * frames_per_second % noi)
+
+        # upside down running animation when the player is moving
+        if self.y_velocity == 0 and speed != 0 and player_move is True and self.gravity_position is True:
+            self.value += 1
+            if self.value >= len(USD_run_images):
+                self.value = 0
+
+            self.image = USD_run_images[self.value]
+            self.value = int((time.time() - start_frame) * frames_per_second % noi)
+
+        # upside down falling animation
+        if self.y_velocity != 0 and player_move is True and self.gravity_position is True:
+            self.value += 1
+            if self.value >= len(USD_falling_images):
+                self.value = 0
+
+            self.image = USD_falling_images[self.value]
+            self.value = int((time.time() - start_frame) * frames_per_second % noi)
+            
         # changes the direction of the player sprite based on the way they are walking
         if self.direction is True and player_move is True:
             player.image = pygame.transform.flip(player.image, True, False)
-        if self.gravity_position is True:
-            player.image = pygame.transform.flip(player.image, False, True)
 
         # checks if the players health goes over the max amount of damage
         if self.current_health >= self.max_health:
