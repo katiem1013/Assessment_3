@@ -621,12 +621,14 @@ class World:
         outside_top_right = pygame.image.load('Graphics/CornerRight.png')
         outside_bottom_left = pygame.image.load('Graphics/BottomLeft.png')
         outside_bottom_right = pygame.image.load('Graphics/BottomRight.png')
+        plain = pygame.image.load('Graphics/Plain.png')
 
         # sets the numbers for each tile to be added to the list
         row_count = 0
         for row in data:
             col_count = 0
             for tile in row:
+                # tile numbers are based on their index in the whole tilemap, including tiles not used
                 if tile == 1:
                     image = main_floor
                     image_rect = image.get_rect()
@@ -634,49 +636,49 @@ class World:
                     image_rect.y = row_count * tile_size
                     tile = (image, image_rect)
                     self.tile_list.append(tile)
-                if tile == 2:
+                if tile == 8:
                     image = left_side
                     image_rect = image.get_rect()
                     image_rect.x = col_count * tile_size
                     image_rect.y = row_count * tile_size
                     tile = (image, image_rect)
                     self.tile_list.append(tile)
-                if tile == 3:
+                if tile == 25:
                     image = right_side
                     image_rect = image.get_rect()
                     image_rect.x = col_count * tile_size
                     image_rect.y = row_count * tile_size
                     tile = (image, image_rect)
                     self.tile_list.append(tile)
-                if tile == 4:
+                if tile == 13:
                     image = main_roof
                     image_rect = image.get_rect()
                     image_rect.x = col_count * tile_size
                     image_rect.y = row_count * tile_size
                     tile = (image, image_rect)
                     self.tile_list.append(tile)
-                if tile == 5:
+                if tile == 31:
                     image = inside_bottom_right
                     image_rect = image.get_rect()
                     image_rect.x = col_count * tile_size
                     image_rect.y = row_count * tile_size
                     tile = (image, image_rect)
                     self.tile_list.append(tile)
-                if tile == 6:
+                if tile == 30:
                     image = inside_bottom_left
                     image_rect = image.get_rect()
                     image_rect.x = col_count * tile_size
                     image_rect.y = row_count * tile_size
                     tile = (image, image_rect)
                     self.tile_list.append(tile)
-                if tile == 7:
+                if tile == 25:
                     image = inside_top_right
                     image_rect = image.get_rect()
                     image_rect.x = col_count * tile_size
                     image_rect.y = row_count * tile_size
                     tile = (image, image_rect)
                     self.tile_list.append(tile)
-                if tile == 8:
+                if tile == 24:
                     image = inside_top_left
                     image_rect = image.get_rect()
                     image_rect.x = col_count * tile_size
@@ -690,33 +692,41 @@ class World:
                     image_rect.y = row_count * tile_size
                     tile = (image, image_rect)
                     self.tile_list.append(tile)
-                if tile == 10:
+                if tile == 2:
                     image = outside_top_right
                     image_rect = image.get_rect()
                     image_rect.x = col_count * tile_size
                     image_rect.y = row_count * tile_size
                     tile = (image, image_rect)
                     self.tile_list.append(tile)
-                if tile == 11:
+                if tile == 12:
                     image = outside_bottom_left
                     image_rect = image.get_rect()
                     image_rect.x = col_count * tile_size
                     image_rect.y = row_count * tile_size
                     tile = (image, image_rect)
                     self.tile_list.append(tile)
-                if tile == 12:
+                if tile == 14:
                     image = outside_bottom_right
                     image_rect = image.get_rect()
                     image_rect.x = col_count * tile_size
                     image_rect.y = row_count * tile_size
                     tile = (image, image_rect)
                     self.tile_list.append(tile)
+                    
+                if tile == 7
+                    image = plain
+                    image_rect = image.get_rect()
+                    image_rect.x = col_count * tile_size
+                    image_rect.y = row_count * tile_size
+                    tile = (image, image_rect)
+                    self.tile_list.append(tile)
 
-                if tile == 13:
+                if tile == 15:
                     spikes = Spike(col_count * tile_size, row_count * tile_size)
                     spike_group.add(spikes)
 
-                if tile == 14:
+                if tile == 16:
                     end = EndOfLevel(col_count * tile_size, row_count * tile_size)
                     end_group.add(end)
 
