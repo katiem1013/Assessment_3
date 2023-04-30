@@ -449,18 +449,18 @@ bullet_group = pygame.sprite.Group()
 # puts the tile map objects into groups
 spike_group = pygame.sprite.Group()
 end_group = pygame.sprite.Group()
-ground_enemy_group = pygame.sprite.Group()
+enemy_group = pygame.sprite.Group()
 enemy_bullet_group = pygame.sprite.Group()
 
 class GroundEnemies(pygame.sprite.Sprite):
-    def __init__(self, player_x, player_y):
+    def __init__(self, enemy_x, enemy_y):
         super().__init__()
         pygame.sprite.Sprite.__init__(self)
         self.image = enemy_idle_images[0]
         self.rect = self.image.get_rect()
         self.y_velocity = 5
-        self.rect.x = player_x
-        self.rect.y = player_y
+        self.rect.x = enemy_x
+        self.rect.y = enemy_y
         self.current_health = 50
         self.max_health = 50
         self.width = self.image.get_width()
@@ -541,6 +541,97 @@ class GroundEnemies(pygame.sprite.Sprite):
 
         if self.current_health <= 0:
             self.kill()
+
+class RoofEnemies(pygame.sprite.Sprite):
+    def __init__(self, enemy2_x, enemy2_y):
+        super().__init__()
+        pygame.sprite.Sprite.__init__(self)
+        self.image = roof_enemy_idle_images[0]
+        self.rect = self.image.get_rect()
+        self.y_velocity = 5
+        self.rect.x = enemy2_x
+        self.rect.y = enemy2_y
+        self.current_health = 50
+        self.max_health = 50
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
+        self.value = 0
+        self.move_counter = 0
+        self.move_direction = 1
+
+    def update(self):
+
+        self.rect.x += self.move_direction
+        self.move_counter -= 1
+        if abs(self.move_counter) > 150:
+            self.move_direction *= -1
+            self.move_counter *= self.move_direction
+
+        if player.speed == 0:
+            self.rect.x -= 0
+        if player.speed != 0 and left_edge is False:
+            self.rect.x -= player.speed
+
+        self.rect.y += self.y_velocity
+
+        if player_move is True:
+            self.y_velocity += 1
+            # if the velocity goes beyond 5 it will set it back to 5
+            if self.y_velocity > 5:
+                self.y_velocity = 5
+
+        level = [level1.tile_list, level2.tile_list]
+        
+        # checking for collision
+        for tile in level[current_level]:
+            # check for collision in x direction
+            if tile[1].colliderect(self.rect.x, self.rect.y, self.width, self.height):
+                 self.move_direction *= -1
+
+            # check for collision in y direction
+            if tile[1].colliderect(self.rect.x, self.rect.y + self.y_velocity, self.width, self.height):
+                if self.y_velocity == 5:
+                    self.y_velocity = tile[1].bottom - self.rect.top
+                    self.y_velocity = 0
+                # check if above the ground
+                if self.y_velocity >= 0:
+                    self.y_velocity = 0
+
+                # checks for collision in y direction when the gravity has been flipped
+                if tile[1].colliderect(self.rect.x, self.rect.y + self.y_velocity, self.width, self.height):
+                    if self.y_velocity == -5:
+                        self.y_velocity = 0
+                    # check if above the ground
+                    if self.y_velocity <= 0:
+                        self.y_velocity = tile[1].top - self.rect.bottom
+                        self.y_velocity = 0
+
+        # idle animation when the enemy is not moving
+        if self.y_velocity == 0 and self.move_counter == 0:
+            self.value += 1
+            if self.value >= len(roof_enemy_idle_images):
+                self.value = 0
+            self.image = roof_enemy_idle_images[self.value]
+            self.value = int((time.time() - start_frame) * frames_per_second % noi)
+
+            # running animation when the enemy is moving
+        if self.y_velocity == 0 and self.move_counter != 0:
+            self.value += 1
+            if self.value >= len(roof_enemy_run_images):
+                self.value = 0
+            self.image = roof_enemy_run_images[self.value]
+            self.value = int((time.time() - start_frame) * frames_per_second % noi)
+
+        # changes the direction of the player sprite based on the way they are walking
+        if self.move_direction == -1:
+            self.image = pygame.transform.flip(self.image, True, False)
+
+        if pygame.sprite.spritecollide(self, bullet_group, True):
+            self.current_health -= 10
+            bullet_group.remove()
+
+        if self.current_health <= 0:
+            self.kill()            
 
 
 class EnemyBullets(pygame.sprite.Sprite):
@@ -722,18 +813,22 @@ class World:
                     tile = (image, image_rect)
                     self.tile_list.append(tile)
 
-                if tile == 15:
+                if tile == 35:
                     spikes = Spike(col_count * tile_size, row_count * tile_size)
                     spike_group.add(spikes)
 
-                if tile == 16:
+                if tile == 36:
                     end = EndOfLevel(col_count * tile_size, row_count * tile_size)
                     end_group.add(end)
 
-                if tile == 20:
+                if tile == 37:
                     ground_enemies = GroundEnemies(col_count * tile_size, row_count * tile_size)
-                    ground_enemy_group.add(ground_enemies)
-
+                    enemy_group.add(ground_enemies)
+                
+                if tile == 38:
+                    roof_enemies = RoofEnemies(col_count * tile_size, row_count * tile_size)
+                    enemy_group.add(roof_enemies)
+                
                 col_count += 1
             row_count += 1
 
@@ -837,7 +932,8 @@ while run:
     time_now = pygame.time.get_ticks()
     if time_now - last_enemy_shot > enemy_cooldown and len(enemy_bullet_group) < 5 and len(ground_enemy_group) > 0:
         enemy_bullet = EnemyBullets(ground_enemy_group.rect.centerx, ground_enemy_group.rect.bottom)
-        enemy_bullet_group.add(enemy_bullet)
+        enemy_bullet2 = EnemyBullets(roof_enemy_group.rect.centerx, roof_enemy_group.rect.bottom)
+        enemy_bullet_group.add(enemy_bullet, enemy_bullet2)
         last_enemy_shot = time_now
 
     tile_speed = player.speed  # makes the levels scroll
