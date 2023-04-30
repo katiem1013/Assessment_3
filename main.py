@@ -1,4 +1,7 @@
 import time
+
+import pygame.sprite
+
 from Levels import *
 from Animations import *
 
@@ -28,11 +31,14 @@ left_edge = False  # determines when the end of the levels have been reached
 
 # screen flipping variables
 gravity = 1  # 1 has the player at the bottom, 2 has the player at the top
-cool_down_GC = 300  # gravity change cool down time
+cool_down_GC = 300  # gravity change cool downtime
 
 # player variables
 bullet_speed = -5
 key = pygame.key.get_pressed()  # to avoid having to write the whole thing out each time a key is pressed
+
+# enemy variables
+enemy_cooldown = 1000
 
 
 # causes the background to move with the player
@@ -444,7 +450,7 @@ bullet_group = pygame.sprite.Group()
 spike_group = pygame.sprite.Group()
 end_group = pygame.sprite.Group()
 ground_enemy_group = pygame.sprite.Group()
-
+enemy_bullet_group = pygame.sprite.Group()
 
 class GroundEnemies(pygame.sprite.Sprite):
     def __init__(self, player_x, player_y):
@@ -535,6 +541,23 @@ class GroundEnemies(pygame.sprite.Sprite):
 
         if self.current_health <= 0:
             self.kill()
+
+
+class EnemyBullets(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load('Graphics/Bullet.png')
+        self.rect = self.image.get_rect()
+        self.rect.center = [x, y]
+
+    def update(self):
+        self.rect.y += 2
+        if self.rect.bottom > screen_height:
+            self.kill()
+
+        if pygame.sprite.spritecollide(self, player_group, False):
+            self.kill()
+            player.health_remaining -= 10
 
 
 # stops the screen scrolling once the player has reached the end of the level
@@ -800,7 +823,13 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-            
+
+    time_now = pygame.time.get_ticks()
+    if time_now - last_enemy_shot > enemy_cooldown and len(enemy_bullet_group) < 5 and len(ground_enemy_group) > 0:
+        enemy_bullet = EnemyBullets(ground_enemy_group.rect.centerx, ground_enemy_group.rect.bottom)
+        enemy_bullet_group.add(enemy_bullet)
+        last_enemy_shot = time_now
+
     tile_speed = player.speed  # makes the levels scroll
 
     pygame.mixer.music.load('Sound/BG_Music.mp3')  # plays background music
