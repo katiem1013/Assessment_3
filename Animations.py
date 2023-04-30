@@ -26,8 +26,8 @@ for x in range(3):
     
 # adds the death images to a list so if can cycle through them
 death_images = []
-for x in range(4):
-    death_images.append(pygame.image.load('Graphics/Player/Death' + str(x) + '.png')
+for x in range(3):
+    death_images.append(pygame.image.load('Graphics/Player/Death' + str(x) + '.png'))
 
 # UPSIDE DOWN PLAYER ANIMATIONS
 # adds the upside down idle images to a list so it can cycle through them
@@ -47,8 +47,8 @@ for x in range(3):
                        
 # adds the upside down death images to a list so if can cycle through them
 USD_death_images = []
-for x in range(4):
-    USD_death_images.append(pygame.image.load('Graphics/Player/USD_Death' + str(x) + '.png')
+for x in range(3):
+    USD_death_images.append(pygame.image.load('Graphics/Player/USD_Death' + str(x) + '.png'))
     
 # ENEMY ANIMATIONS
 # adds the idle images to a list so it can cycle through them
@@ -61,22 +61,8 @@ enemy_run_images = []
 for x in range(8):
     enemy_run_images.append(pygame.image.load('Graphics/Enemy_One/Run' + str(x) + '.png'))
 
-# adds the death images to a list so if can cycle through them
-enemy_death_images = []
-for x in range(4):
-    enemy_death_images.append(pygame.image.load('Graphics/Enemy_One/Death' + str(x) + '.png')
-                            
-# adds the idle images to a list so it can cycle through them
-roof_enemy_idle_images = []
-for x in range(4):
-    roof_enemy_idle_images.append(pygame.image.load('Graphics/Enemy_Two/Idle' + str(x) + '.png'))
-
 # adds the running images to a list so it can cycle through them
 roof_enemy_run_images = []
 for x in range(8):
-    roof_enemy_run_images.append(pygame.image.load('Graphics/Enemy_Two/Run' + str(x) + '.png'))    
- 
-# adds the death images to a list so if can cycle through them
-roof_enemy_death_images = []
-for x in range(4):
-    roof_enemy_death_images.append(pygame.image.load('Graphics/Enemy_Two/Death' + str(x) + '.png')
+    roof_enemy_run_images.append(pygame.image.load('Graphics/Enemy_Two/Run' + str(x) + '.png'))
+
