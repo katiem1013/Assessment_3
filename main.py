@@ -44,7 +44,6 @@ score = 0
 score_increment = 10
 
 
-
 def score_increase():
     global score
     global score_increment
@@ -192,8 +191,6 @@ class Player(pygame.sprite.Sprite):
 
             # check the player has reached the end and ending the game when they have
             if pygame.sprite.spritecollide(self, complete_level_group, False) and player_move is True:
-                text = font.render('Level Complete', True, 'white')
-                screen.blit(text, (925, 372))  # displays font
                 game_over = True
 
         if level_2 is True:  # will only happen during level 2
@@ -214,8 +211,6 @@ class Player(pygame.sprite.Sprite):
 
             # check the player has reached the end and ending the game when they have
             if pygame.sprite.spritecollide(self, complete_level_group_2, False) and player_move is True:
-                text = font.render('Level Completed...Ending game...', True, 'white')
-                screen.blit(text, (925, 372))  # displays font
                 game_over = True
 
         self.rect.x += speed  # sets the x rect of the player to the speed
@@ -416,6 +411,16 @@ def draw_start_menu():
 
     # draws backing square for the menu
     pygame.draw.rect(screen, (24, 20, 37), [810, 325, 300, 220], 0, 15)
+
+    # controls
+    text = font.render('Controls: ', True, 'white')
+    screen.blit(text, (25, 25))
+    text = font.render('- W and S to switch gravity,', True, 'white')
+    screen.blit(text, (25, 65))
+    text = font.render('- A and D to move side to side,', True, 'white')
+    screen.blit(text, (25, 95))
+    text = font.render('- SPACE to shoot.', True, 'white')
+    screen.blit(text, (25, 125))
 
     # start menu button
     start_button = pygame.draw.rect(screen, (181, 80, 136), [830, 350, 260, 70], 0, 15)
@@ -972,10 +977,26 @@ while run:
         bullet_group.update()
         bullet_group.draw(screen)
 
-
         if game_over is True:
-            pygame.time.delay(500)
-            run = False
+
+            text = font.render('Level Complete', True, 'white')
+            screen.blit(text, (850, 372))  # displays font
+
+            # exit game button
+            exit_button = pygame.draw.rect(screen, (181, 80, 136), [830, 450, 260, 70], 0, 15)
+            pygame.draw.rect(screen, (181, 80, 136), [830, 450, 260, 70], 5, 15)
+            text = font.render('Exit', True, 'black')
+            screen.blit(text, (930, 472))
+
+            # checks which button is hovered over when the mouse is clicked
+            for start in pygame.event.get():
+                if start.type == pygame.MOUSEBUTTONDOWN:
+                    if start.button == 1:
+                        # exits the game
+                        if exit_button.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0]:
+                            run = False
+                        else:
+                            run = True
 
     # draws the start menu to the screen
     if start_menu is True:
